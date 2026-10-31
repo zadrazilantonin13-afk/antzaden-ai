@@ -91,7 +91,12 @@ const typing = document.getElementById("typing");
 
 let busy = false;
 let conversation = [];
-
+ 
+const content = document.createElement("div");
+content.className = "markdown";
+content.innerHTML = renderMarkdown(text);
+box.appendChild(content);
+ 
 function scrollDown(){
  chat.scrollTop = chat.scrollHeight;
 }
