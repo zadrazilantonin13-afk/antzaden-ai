@@ -6,9 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d0b">
 <title>AntZadEn AI Assistant</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;height:100dvh;background:#090d0b;color:#edf5ef;font-family:Arial, sans-serif;display:flex;flex-direction:column;overflow:hidden}
+body{margin:0;height:100dvh;background:#090d0b;color:#edf5ef;font-family:Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
 header{padding:17px 22px;background:#101713;border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
@@ -38,6 +39,7 @@ input::placeholder{color:#718077}
 @media(max-width:600px){header{padding:13px}.message{max-width:92%;font-size:13px}main{padding:12px 11px 0}.quick{padding:10px}}
 </style>
 </head>
+
 <body>
 <header>
  <div class="brand">
@@ -54,7 +56,7 @@ input::placeholder{color:#718077}
  <button onclick="quickAsk('Co je to AntZadEn?')">💡 Co je AntZadEn?</button>
  <button onclick="quickAsk('Napiš básničku o AntZadEn.')">✍️ Básnička</button>
  <button onclick="quickAsk('Kolik je hodin?')">🕒 Kolik je hodin?</button>
- <button onclick="quickAsk('Jaké je počasí v České republice?')">🌤️ Počasí</button>
+ <button onclick="quickAsk('Jaké je počasí v Čejkovicích?')">🌤️ Počasí</button>
 </div>
 
 <main>
@@ -63,7 +65,10 @@ input::placeholder{color:#718077}
    <div class="botname">ANTZADEN AI</div>
    Ahoj! 👋 Jsem AntZadEn AI Assistant. Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
   </div>
-  <div id="typing"><span class="spinner"></span> AntZadEn AI přemýšlí…</div>
+  <div id="typing">
+   <span class="spinner"></span>
+   AntZadEn AI přemýšlí…
+  </div>
  </section>
 
  <div class="bottom">
@@ -71,7 +76,7 @@ input::placeholder{color:#718077}
    <input id="input" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
    <button id="send" type="submit">➤</button>
   </form>
-  <div class="hint">AntZadEn AI • Powered by Gemini</div>
+  <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI</div>
  </div>
 </main>
 
@@ -116,36 +121,158 @@ function quickAsk(text){
  form.requestSubmit();
 }
 
-async function typeAnswer(element, text){
- const step = 4;
- for(let i = 0; i < text.length; i += step){
-  element.textContent = text.slice(0, i + step);
-  scrollDown();
-  await new Promise(resolve => setTimeout(resolve, 12));
+// Převod počasí na český popis
+function weatherDescription(code){
+ const descriptions = {
+  0:"jasno",
+  1:"převážně jasno",
+  2:"polojasno",
+  3:"zataženo",
+  45:"mlha",
+  48:"mrznoucí mlha",
+  51:"slabé mrholení",
+  53:"mrholení",
+  55:"silné mrholení",
+  61:"slabý déšť",
+  63:"déšť",
+  65:"silný déšť",
+  71:"slabé sněžení",
+  73:"sněžení",
+  75:"silné sněžení",
+  80:"přeháňky",
+  81:"silnější přeháňky",
+  82:"prudké přeháňky",
+  95:"bouřky",
+  96:"bouřky s kroupami",
+  99:"silné bouřky s kroupami"
+ };
+
+ return descriptions[code] || "proměnlivé počasí";
+}
+
+// Výběr dne podle otázky
+function getTargetDate(query){
+ const now = new Date();
+ const date = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ const q = query.toLowerCase();
+
+ if(q.includes("pozítří")){
+  date.setDate(date.getDate()+2);
+  return date;
  }
- element.textContent = text;
+
+ if(q.includes("zítra")){
+  date.setDate(date.getDate()+1);
+  return date;
+ }
+
+ const weekdays = {
+  "neděli":0,
+  "pondělí":1,
+  "úterý":2,
+  "středu":3,
+  "čtvrtek":4,
+  "pátek":5,
+  "sobotu":6
+ };
+
+ for(const [name,day] of Object.entries(weekdays)){
+  if(q.includes(name)){
+   let difference = (day-date.getDay()+7)%7;
+   date.setDate(date.getDate()+difference);
+   return date;
+  }
+ }
+
+ return date;
+}
+
+function dateToISO(date){
+ const year = date.getFullYear();
+ const month = String(date.getMonth()+1).padStart(2,"0");
+ const day = String(date.getDate()).padStart(2,"0");
+ return `${year}-${month}-${day}`;
+}
+
+async function getWeather(query){
+ const targetDate = getTargetDate(query);
+ const today = new Date();
+ today.setHours(0,0,0,0);
+
+ const difference = Math.round(
+  (targetDate-today)/86400000
+ );
+
+ if(difference < 0 || difference > 15){
+  return "Předpověď pro tento den zatím není dostupná. Zkus datum v následujících 15 dnech.";
+ }
+
+ const url =
+  "https://api.open-meteo.com/v1/forecast" +
+  "?latitude=48.905" +
+  "&longitude=16.95" +
+  "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+  "&timezone=Europe%2FPrague" +
+  "&forecast_days=16";
+
+ const response = await fetch(url);
+
+ if(!response.ok){
+  throw new Error("Nepodařilo se načíst předpověď počasí.");
+ }
+
+ const data = await response.json();
+
+ if(!data.daily || !data.daily.time){
+  throw new Error("Meteorologická služba nevrátila předpověď.");
+ }
+
+ const wantedDate = dateToISO(targetDate);
+ const index = data.daily.time.indexOf(wantedDate);
+
+ if(index === -1){
+  return "Předpověď pro vybraný den není dostupná.";
+ }
+
+ const min = data.daily.temperature_2m_min[index];
+ const max = data.daily.temperature_2m_max[index];
+ const rain = data.daily.precipitation_probability_max[index];
+ const code = data.daily.weather_code[index];
+
+ const dateText = targetDate.toLocaleDateString("cs-CZ",{
+  weekday:"long",
+  day:"numeric",
+  month:"long"
+ });
+
+ return `🌤️ Předpověď počasí pro Čejkovice
+
+📅 ${dateText}
+
+🌡️ Teplota: ${min} až ${max} °C
+☁️ Počasí: ${weatherDescription(code)}
+🌧️ Pravděpodobnost srážek: ${rain ?? "údaj není dostupný"} %
+
+Jde o předpověď, která se může ještě změnit.`;
 }
 
 async function getLocalAnswer(query){
  const q = query.toLowerCase();
 
  if(q.includes("kolik je hodin") || q === "čas"){
-  return "Právě je " + new Date().toLocaleTimeString("cs-CZ", {
-   hour:"2-digit", minute:"2-digit"
+  return "Právě je " + new Date().toLocaleTimeString("cs-CZ",{
+   hour:"2-digit",
+   minute:"2-digit"
   }) + " podle času tvého zařízení.";
  }
 
- if(q.includes("počasí") || q.includes("stupň") || q.includes("teplota")){
-  const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9&longitude=16.3&current=temperature_2m&timezone=Europe%2FPrague";
-  const response = await fetch(url);
-  if(!response.ok) throw new Error("Počasí se nepodařilo načíst.");
-  const data = await response.json();
-
-  if(data.current){
-   return "V oblasti středu České republiky je právě přibližně " +
-    data.current.temperature_2m + " °C. V různých částech ČR se teplota liší.";
-  }
-  throw new Error("Meteorologická služba nevrátila údaje.");
+ if(
+  q.includes("počasí") ||
+  q.includes("předpověď") ||
+  q.includes("kolik bude stupň") ||
+  q.includes("teplota")
+ ){
+  return await getWeather(query);
  }
 
  return null;
@@ -158,6 +285,7 @@ async function askAI(query){
 
  const message =
   "Jsi AntZadEn AI Assistant. Odpovídej česky, přátelsky, srozumitelně a pravdivě. Pomáhej s AntZadEn, Robloxem, weby, programováním a běžnými otázkami. Pokud něco nevíš, přiznej to.\n\n" +
+  "Uživatel uvedl lokalitu Čejkovice 696 15. Při místních dotazech používej tuto lokalitu.\n\n" +
   (history ? "PŘEDCHOZÍ KONVERZACE:\n" + history + "\n\n" : "") +
   "NOVÁ ZPRÁVA:\n" + query;
 
@@ -168,6 +296,7 @@ async function askAI(query){
  });
 
  let data;
+
  try{
   data = await response.json();
  }catch(e){
@@ -179,13 +308,25 @@ async function askAI(query){
  }
 
  if(!data.reply){
-  throw new Error("Gemini nevrátilo odpověď.");
+  throw new Error("AI nevrátila odpověď.");
  }
 
  return data.reply;
 }
 
-form.addEventListener("submit", async function(e){
+async function typeAnswer(element,text){
+ const step = 4;
+
+ for(let i=0;i<text.length;i+=step){
+  element.textContent = text.slice(0,i+step);
+  scrollDown();
+  await new Promise(resolve=>setTimeout(resolve,12));
+ }
+
+ element.textContent = text;
+}
+
+form.addEventListener("submit",async function(e){
  e.preventDefault();
 
  const query = input.value.trim();
@@ -197,6 +338,7 @@ form.addEventListener("submit", async function(e){
 
  addMessage(query,true);
  input.value = "";
+
  conversation.push({role:"user",content:query});
 
  typing.style.display = "flex";
@@ -214,11 +356,7 @@ form.addEventListener("submit", async function(e){
   const target = addMessage("",false);
   await typeAnswer(target,answer);
 
-conversation.push({role:"assistant",content:answer});
-
-if(window.AntZadEnSpeak){
-  window.AntZadEnSpeak(answer);
-}
+  conversation.push({role:"assistant",content:answer});
 
   if(conversation.length > 24){
    conversation = conversation.slice(-24);
@@ -226,11 +364,12 @@ if(window.AntZadEnSpeak){
 
  }catch(error){
   typing.style.display = "none";
+
   addMessage(
-   "Nepodařilo se spojit s AI mozkem.\n\n" +
-   error.message +
-   "\n\nZkontroluj Cloudflare Worker a Gemini API klíč."
+   "Nepodařilo se získat odpověď.\n\n" +
+   error.message
   );
+
   console.error(error);
  }finally{
   busy = false;
@@ -240,114 +379,5 @@ if(window.AntZadEnSpeak){
  }
 });
 </script>
- 
-<style>
-#voice-panel {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:8px;
-}
-#voice-panel button {
-  background:#14251a;
-  border:1px solid #55e879;
-  color:#8affae;
-  border-radius:12px;
-  padding:11px 17px;
-  cursor:pointer;
-  font-weight:bold;
-}
-#voice-panel button:hover {
-  background:#20452b;
-}
-#voice-status {
-  font-size:11px;
-  color:#91a397;
-}
-</style>
-
-<div id="voice-panel">
-  <button id="voice-mic">🎤 Mluvit</button>
-  <button id="voice-off">🔇 Zastavit hlas</button>
-  <span id="voice-status">Hlas připraven</span>
-</div>
-
-<script>
-(() => {
-  const Recognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-  const mic = document.getElementById("voice-mic");
-  const off = document.getElementById("voice-off");
-  const status = document.getElementById("voice-status");
-
-  let recognition;
-  let voiceEnabled = true;
-
-  if (!Recognition) {
-    status.textContent = "Mikrofon není podporován.";
-    mic.disabled = true;
-    return;
-  }
-
-  recognition = new Recognition();
-  recognition.lang = "cs-CZ";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  mic.onclick = () => {
-    voiceEnabled = true;
-    try {
-      recognition.start();
-      status.textContent = "🎤 Poslouchám...";
-    } catch {
-      status.textContent = "Mikrofon už poslouchá.";
-    }
-  };
-
-  recognition.onresult = event => {
-    const spoken = event.results[0][0].transcript;
-
-    status.textContent = "Zpracovávám: " + spoken;
-
-    const input = document.getElementById("input");
-    input.value = spoken;
-
-    document.getElementById("form").requestSubmit();
-  };
-
-  recognition.onerror = event => {
-    status.textContent = "Chyba mikrofonu: " + event.error;
-  };
-
-  recognition.onend = () => {
-    if (status.textContent === "🎤 Poslouchám...") {
-      status.textContent = "Hlas připraven";
-    }
-  };
-
-  off.onclick = () => {
-    voiceEnabled = false;
-    recognition.stop();
-    speechSynthesis.cancel();
-    status.textContent = "Hlas vypnut";
-  };
-
-  window.AntZadEnSpeak = text => {
-    if (!voiceEnabled) return;
-
-    speechSynthesis.cancel();
-
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "cs-CZ";
-    speech.rate = 1;
-
-    speechSynthesis.speak(speech);
-  };
-})();
-</script>
-
 </body>
 </html>
