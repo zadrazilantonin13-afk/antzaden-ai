@@ -5,112 +5,447 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d0b">
+<meta name="description" content="AntZadEn AI Assistant – osobní AI asistent.">
 <title>AntZadEn AI Assistant</title>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;height:100dvh;background:#090d0b;color:#edf5ef;font-family:Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
-header{padding:17px 22px;background:#101713;border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
-h1{font-size:18px;margin:0}
-.sub{font-size:11px;color:#91a397;margin-top:4px}
-.status{color:#55e879;font-size:12px}
-.quick{display:flex;gap:8px;padding:12px;background:#0c120e;overflow-x:auto}
-.quick button{white-space:nowrap;background:#151e18;color:#c6d5ca;border:1px solid #304235;border-radius:22px;padding:9px 14px;cursor:pointer}
-.quick button:hover{border-color:#55e879;color:white}
-main{width:100%;max-width:950px;margin:auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 16px 0}
-#chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;padding:5px 3px 20px;scroll-behavior:smooth}
-.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.6;font-size:14px;overflow-wrap:anywhere;animation:appear .2s ease}
-@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.bot{align-self:flex-start;background:#141e17;border:1px solid #2a3b2e;border-bottom-left-radius:5px}
-.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px;white-space:pre-wrap}
-.botname{font-size:10px;color:#55e879;font-weight:bold;letter-spacing:1px;margin-bottom:7px}
-.markdown{overflow-wrap:anywhere}
-.markdown strong{color:#75f596;font-weight:800}
-.markdown em{color:#c6d5ca}
-.markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3;margin:13px 0 7px}
-.markdown h1{font-size:21px}
-.markdown h2{font-size:18px}
-.markdown h3{font-size:16px}
-.markdown p{margin:7px 0}
-.markdown ul,.markdown ol{padding-left:23px;margin:8px 0}
-.markdown li{margin:5px 0}
-.markdown a{color:#78f49a;text-decoration:underline}
-.markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
-.markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
-.markdown pre code{background:none;padding:0;color:#b8f5c6}
-.markdown blockquote{border-left:3px solid #55e879;margin:9px 0;padding:4px 12px;color:#b7c9bc}
-#typing{display:none;align-self:flex-start;align-items:center;gap:10px;padding:12px 15px;background:#111a14;border:1px solid #2a3b2e;border-radius:16px;color:#91a397;font-size:12px}
-.spinner{width:15px;height:15px;border:2px solid #34513b;border-top-color:#55e879;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.bottom{padding:13px 0 18px;border-top:1px solid #1b2a20}
-form{display:flex;gap:10px;align-items:center;background:#111914;border:1px solid #304235;border-radius:17px;padding:8px 9px 8px 16px}
-input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
-input::placeholder{color:#718077}
-#send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px;cursor:pointer}
-#send:disabled{opacity:.5}
-.voicebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
-.voicebar button{background:#14251a;border:1px solid #35543c;color:#a6f5b8;border-radius:10px;padding:9px 13px;cursor:pointer}
-.voicebar button:hover{border-color:#55e879}
-#voice-status{font-size:11px;color:#91a397}
-.hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
-@media(max-width:600px){header{padding:13px}.message{max-width:94%;font-size:13px}main{padding:12px 11px 0}.quick{padding:10px}}
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100dvh;
+    background: #090d0b;
+    color: #edf5ef;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+header {
+    padding: 17px 22px;
+    background: #101713;
+    border-bottom: 1px solid #26372c;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #70f28e, #159b45);
+    display: grid;
+    place-items: center;
+    color: #061109;
+    font-size: 23px;
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.sub {
+    font-size: 11px;
+    color: #91a397;
+    margin-top: 4px;
+}
+
+.status {
+    color: #55e879;
+    font-size: 12px;
+}
+
+.quick {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: #0c120e;
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.quick button {
+    white-space: nowrap;
+    background: #151e18;
+    color: #c6d5ca;
+    border: 1px solid #304235;
+    border-radius: 22px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.quick button:hover {
+    border-color: #55e879;
+    color: white;
+}
+
+main {
+    width: 100%;
+    max-width: 950px;
+    margin: auto;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 16px 0;
+}
+
+#chat {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    padding: 5px 3px 20px;
+    scroll-behavior: smooth;
+}
+
+.message {
+    max-width: 85%;
+    padding: 13px 16px;
+    border-radius: 17px;
+    line-height: 1.6;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+    animation: appear .2s ease;
+}
+
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bot {
+    align-self: flex-start;
+    background: #141e17;
+    border: 1px solid #2a3b2e;
+    border-bottom-left-radius: 5px;
+}
+
+.user {
+    align-self: flex-end;
+    background: #176b35;
+    border: 1px solid #2c9b4b;
+    border-bottom-right-radius: 5px;
+    white-space: pre-wrap;
+}
+
+.botname {
+    font-size: 10px;
+    color: #55e879;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+}
+
+.markdown {
+    overflow-wrap: anywhere;
+}
+
+.markdown strong {
+    color: #75f596;
+    font-weight: 800;
+}
+
+.markdown em {
+    color: #c6d5ca;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+    color: #85f5a0;
+    line-height: 1.3;
+    margin: 13px 0 7px;
+}
+
+.markdown h1 {
+    font-size: 21px;
+}
+
+.markdown h2 {
+    font-size: 18px;
+}
+
+.markdown h3 {
+    font-size: 16px;
+}
+
+.markdown p {
+    margin: 7px 0;
+}
+
+.markdown ul,
+.markdown ol {
+    padding-left: 23px;
+    margin: 8px 0;
+}
+
+.markdown li {
+    margin: 5px 0;
+}
+
+.markdown a {
+    color: #78f49a;
+    text-decoration: underline;
+}
+
+.markdown code {
+    background: #202d23;
+    padding: 3px 6px;
+    border-radius: 5px;
+    color: #8affae;
+    font-family: Consolas, monospace;
+}
+
+.markdown pre {
+    background: #080e0a;
+    border: 1px solid #2a3b2e;
+    padding: 13px;
+    border-radius: 10px;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.markdown pre code {
+    background: none;
+    padding: 0;
+    color: #b8f5c6;
+}
+
+.markdown blockquote {
+    border-left: 3px solid #55e879;
+    margin: 9px 0;
+    padding: 4px 12px;
+    color: #b7c9bc;
+}
+
+#typing {
+    display: none;
+    align-self: flex-start;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: #111a14;
+    border: 1px solid #2a3b2e;
+    border-radius: 16px;
+    color: #91a397;
+    font-size: 12px;
+}
+
+.spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #34513b;
+    border-top-color: #55e879;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.bottom {
+    padding: 13px 0 18px;
+    border-top: 1px solid #1b2a20;
+    flex-shrink: 0;
+}
+
+form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #111914;
+    border: 1px solid #304235;
+    border-radius: 17px;
+    padding: 8px 9px 8px 16px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: white;
+    font-size: 15px;
+    padding: 10px;
+}
+
+input::placeholder {
+    color: #718077;
+}
+
+#send {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #65ef88, #24b653);
+    color: #061109;
+    font-size: 21px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+#send:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.voicebar {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+}
+
+.voicebar button {
+    background: #14251a;
+    border: 1px solid #35543c;
+    color: #a6f5b8;
+    border-radius: 10px;
+    padding: 9px 13px;
+    cursor: pointer;
+}
+
+.voicebar button:hover {
+    border-color: #55e879;
+}
+
+.voicebar button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+#voice-status {
+    font-size: 11px;
+    color: #91a397;
+}
+
+.hint {
+    text-align: center;
+    color: #637268;
+    font-size: 10px;
+    margin-top: 10px;
+}
+
+@media(max-width:600px) {
+    header {
+        padding: 13px;
+    }
+
+    .message {
+        max-width: 94%;
+        font-size: 13px;
+    }
+
+    main {
+        padding: 12px 11px 0;
+    }
+
+    .quick {
+        padding: 10px;
+    }
+}
 </style>
 </head>
 
 <body>
 
 <header>
- <div class="brand">
-  <div class="logo">A</div>
-  <div>
-   <h1>AntZadEn AI Assistant</h1>
-   <div class="sub">Tvůj osobní AI asistent</div>
-  </div>
- </div>
- <div class="status">● ONLINE</div>
+    <div class="brand">
+        <div class="logo">A</div>
+        <div>
+            <h1>AntZadEn AI Assistant</h1>
+            <div class="sub">Tvůj osobní AI asistent</div>
+        </div>
+    </div>
+
+    <div class="status">● ONLINE</div>
 </header>
 
 <div class="quick">
- <button onclick="quickAsk('Co je to AntZadEn?')">💡 Co je AntZadEn?</button>
- <button onclick="quickAsk('Napiš básničku o AntZadEn.')">✍️ Básnička</button>
- <button onclick="quickAsk('Kolik je hodin?')">🕒 Kolik je hodin?</button>
- <button onclick="quickAsk('Jaké je počasí v Čejkovicích?')">🌤️ Počasí</button>
+    <button type="button" onclick="quickAsk('Co je to AntZadEn?')">💡 Co je AntZadEn?</button>
+    <button type="button" onclick="quickAsk('Napiš básničku o AntZadEn.')">✍️ Básnička</button>
+    <button type="button" onclick="quickAsk('Kolik je hodin?')">🕒 Kolik je hodin?</button>
+    <button type="button" onclick="quickAsk('Jaké je počasí v Čejkovicích?')">🌤️ Počasí</button>
 </div>
 
 <main>
- <section id="chat" aria-live="polite">
-  <div class="message bot">
-   <div class="botname">ANTZADEN AI</div>
-   <div class="markdown">
-    Ahoj! 👋 Jsem <strong>AntZadEn AI Assistant</strong>.<br>
-    Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
-   </div>
-  </div>
-  <div id="typing">
-   <span class="spinner"></span>
-   AntZadEn AI přemýšlí…
-  </div>
- </section>
+    <section id="chat" aria-live="polite">
 
- <div class="bottom">
-  <form id="form">
-   <input id="input" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
-   <button id="send" type="submit">➤</button>
-  </form>
+        <div class="message bot">
+            <div class="botname">ANTZADEN AI</div>
+            <div class="markdown">
+                Ahoj! 👋 Jsem <strong>AntZadEn AI Assistant</strong>.<br>
+                Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
+            </div>
+        </div>
 
-  <div class="voicebar">
-   <button type="button" id="voice-mic">🎤 Mluvit</button>
-   <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
-   <span id="voice-status">Hlas připraven</span>
-  </div>
+        <div id="typing">
+            <span class="spinner"></span>
+            AntZadEn AI přemýšlí…
+        </div>
 
-  <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI</div>
- </div>
+    </section>
+
+    <div class="bottom">
+
+        <form id="form">
+            <input
+                id="input"
+                type="text"
+                placeholder="Napiš zprávu..."
+                autocomplete="off"
+                maxlength="4000"
+            >
+            <button id="send" type="submit">➤</button>
+        </form>
+
+        <div class="voicebar">
+            <button type="button" id="voice-mic">🎤 Mluvit</button>
+            <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
+            <span id="voice-status">Hlas připraven</span>
+        </div>
+
+        <div class="hint">
+            AntZadEn AI • Powered by Cloudflare Workers AI
+        </div>
+
+    </div>
 </main>
 
 <script>
+// ==========================================
+// ANTZADEN AI – HLAVNÍ NASTAVENÍ
+// ==========================================
+
 const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
 
 const chat = document.getElementById("chat");
@@ -125,272 +460,355 @@ let voiceEnabled = false;
 let recognition = null;
 let listening = false;
 
+// ==========================================
 // POSOUVÁNÍ CHATU
-function scrollDown(){
- chat.scrollTop = chat.scrollHeight;
+// ==========================================
+
+function scrollDown() {
+    if (chat) {
+        chat.scrollTop = chat.scrollHeight;
+    }
 }
 
-
+// ==========================================
 // BEZPEČNÉ ZPRACOVÁNÍ MARKDOWNU
+// ==========================================
 
-function escapeHTML(text){
- return String(text)
-  .replace(/&/g,"&amp;")
-  .replace(/</g,"&lt;")
-  .replace(/>/g,"&gt;")
-  .replace(/"/g,"&quot;")
-  .replace(/'/g,"&#039;");
+function escapeHTML(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-function inlineMarkdown(text){
- let html = escapeHTML(text);
+function inlineMarkdown(text) {
+    let html = escapeHTML(text);
 
- html = html.replace(
-  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-  '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
- );
+    html = html.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
 
- html = html.replace(/`([^`]+)`/g,"<code>$1</code>");
- html = html.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
- html = html.replace(/__(.+?)__/g,"<strong>$1</strong>");
- html = html.replace(/\*(.+?)\*/g,"<em>$1</em>");
- html = html.replace(/_(.+?)_/g,"<em>$1</em>");
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    html = html.replace(/_(.+?)_/g, "<em>$1</em>");
 
- return html;
+    return html;
 }
 
-function renderMarkdown(text){
- const lines = String(text).split("\n");
- let html = "";
- let inCode = false;
- let codeLines = [];
- let listType = null;
- let paragraph = [];
+function renderMarkdown(text) {
+    const lines = String(text).split("\n");
 
- function closeList(){
-  if(listType){
-   html += listType === "ul" ? "</ul>" : "</ol>";
-   listType = null;
-  }
- }
+    let html = "";
+    let inCode = false;
+    let codeLines = [];
+    let listType = null;
+    let paragraph = [];
 
- function flushParagraph(){
-  if(paragraph.length){
-   html += "<p>" + paragraph.map(inlineMarkdown).join("<br>") + "</p>";
-   paragraph = [];
-  }
- }
+    function closeList() {
+        if (listType) {
+            html += listType === "ul" ? "</ul>" : "</ol>";
+            listType = null;
+        }
+    }
 
- for(const line of lines){
-  if(line.trim().startsWith("```")){
-   flushParagraph();
-   closeList();
+    function flushParagraph() {
+        if (paragraph.length) {
+            html += "<p>" +
+                paragraph.map(inlineMarkdown).join("<br>") +
+                "</p>";
 
-   if(inCode){
-    html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
-    codeLines = [];
-    inCode = false;
-   }else{
-    inCode = true;
-   }
-   continue;
-  }
+            paragraph = [];
+        }
+    }
 
-  if(inCode){
-   codeLines.push(line);
-   continue;
-  }
+    for (const line of lines) {
 
-  const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        if (line.trim().startsWith("```")) {
+            flushParagraph();
+            closeList();
 
-  if(heading){
-   flushParagraph();
-   closeList();
-   const level = heading[1].length;
-   html += `<h${level}>${inlineMarkdown(heading[2])}</h${level}>`;
-   continue;
-  }
+            if (inCode) {
+                html += "<pre><code>" +
+                    escapeHTML(codeLines.join("\n")) +
+                    "</code></pre>";
 
-  const bullet = line.match(/^\s*[-*]\s+(.+)$/);
-  const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+                codeLines = [];
+                inCode = false;
+            } else {
+                inCode = true;
+            }
 
-  if(bullet || numbered){
-   flushParagraph();
-   const type = bullet ? "ul" : "ol";
+            continue;
+        }
 
-   if(listType !== type){
+        if (inCode) {
+            codeLines.push(line);
+            continue;
+        }
+
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+
+        if (heading) {
+            flushParagraph();
+            closeList();
+
+            const level = heading[1].length;
+
+            html += `<h${level}>${inlineMarkdown(heading[2])}</h${level}>`;
+            continue;
+        }
+
+        const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+        const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+
+        if (bullet || numbered) {
+            flushParagraph();
+
+            const type = bullet ? "ul" : "ol";
+
+            if (listType !== type) {
+                closeList();
+
+                html += type === "ul" ? "<ul>" : "<ol>";
+                listType = type;
+            }
+
+            html += "<li>" +
+                inlineMarkdown((bullet || numbered)[1]) +
+                "</li>";
+
+            continue;
+        }
+
+        const quote = line.match(/^\s*>\s?(.*)$/);
+
+        if (quote) {
+            flushParagraph();
+            closeList();
+
+            html += "<blockquote>" +
+                inlineMarkdown(quote[1]) +
+                "</blockquote>";
+
+            continue;
+        }
+
+        if (!line.trim()) {
+            flushParagraph();
+            closeList();
+            continue;
+        }
+
+        closeList();
+        paragraph.push(line);
+    }
+
+    if (inCode) {
+        html += "<pre><code>" +
+            escapeHTML(codeLines.join("\n")) +
+            "</code></pre>";
+    }
+
+    flushParagraph();
     closeList();
-    html += type === "ul" ? "<ul>" : "<ol>";
-    listType = type;
-   }
 
-   html += "<li>" + inlineMarkdown((bullet || numbered)[1]) + "</li>";
-   continue;
-  }
-
-  const quote = line.match(/^\s*>\s?(.*)$/);
-
-  if(quote){
-   flushParagraph();
-   closeList();
-   html += "<blockquote>" + inlineMarkdown(quote[1]) + "</blockquote>";
-   continue;
-  }
-
-  if(!line.trim()){
-   flushParagraph();
-   closeList();
-   continue;
-  }
-
-  closeList();
-  paragraph.push(line);
- }
-
- if(inCode){
-  html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
- }
-
- flushParagraph();
- closeList();
-
- return html;
+    return html;
 }
 
-// ZPRÁVY
+// ==========================================
+// ZOBRAZOVÁNÍ ZPRÁV
+// ==========================================
 
-function addMessage(text,user=false){
- const box = document.createElement("div");
- box.className = "message " + (user ? "user" : "bot");
+function addMessage(text, user = false) {
+    const box = document.createElement("div");
 
- if(!user){
-  const name = document.createElement("div");
-  name.className = "botname";
-  name.textContent = "ANTZADEN AI";
-  box.appendChild(name);
- }
+    box.className = "message " + (user ? "user" : "bot");
 
- const content = document.createElement("div");
+    if (!user) {
+        const name = document.createElement("div");
 
- if(user){
-  content.textContent = text;
- }else{
-  content.className = "markdown";
-  content.innerHTML = renderMarkdown(text);
- }
+        name.className = "botname";
+        name.textContent = "ANTZADEN AI";
 
- box.appendChild(content);
- chat.insertBefore(box,typing);
- scrollDown();
+        box.appendChild(name);
+    }
 
- return content;
+    const content = document.createElement("div");
+
+    if (user) {
+        content.textContent = text;
+    } else {
+        content.className = "markdown";
+        content.innerHTML = renderMarkdown(text);
+    }
+
+    box.appendChild(content);
+
+    if (typing && typing.parentNode === chat) {
+        chat.insertBefore(box, typing);
+    } else {
+        chat.appendChild(box);
+    }
+
+    scrollDown();
+
+    return content;
 }
 
-function quickAsk(text){
- input.value = text;
- form.requestSubmit();
+// ==========================================
+// RYCHLÉ OTÁZKY
+// ==========================================
+
+function quickAsk(text) {
+    input.value = text;
+    form.requestSubmit();
 }
 
+// ==========================================
 // POČASÍ
-function weatherDescription(code){
- const descriptions = {
-  0:"jasno",1:"převážně jasno",2:"polojasno",3:"zataženo",
-  45:"mlha",48:"mrznoucí mlha",
-  51:"slabé mrholení",53:"mrholení",55:"silné mrholení",
-  61:"slabý déšť",63:"déšť",65:"silný déšť",
-  71:"slabé sněžení",73:"sněžení",75:"silné sněžení",
-  80:"přeháňky",81:"silnější přeháňky",82:"prudké přeháňky",
-  95:"bouřky",96:"bouřky s kroupami",99:"silné bouřky s kroupami"
- };
- return descriptions[code] || "proměnlivé počasí";
+// ==========================================
+
+function weatherDescription(code) {
+    const descriptions = {
+        0: "jasno",
+        1: "převážně jasno",
+        2: "polojasno",
+        3: "zataženo",
+        45: "mlha",
+        48: "mrznoucí mlha",
+        51: "slabé mrholení",
+        53: "mrholení",
+        55: "silné mrholení",
+        61: "slabý déšť",
+        63: "déšť",
+        65: "silný déšť",
+        71: "slabé sněžení",
+        73: "sněžení",
+        75: "silné sněžení",
+        80: "přeháňky",
+        81: "silnější přeháňky",
+        82: "prudké přeháňky",
+        95: "bouřky",
+        96: "bouřky s kroupami",
+        99: "silné bouřky s kroupami"
+    };
+
+    return descriptions[code] || "proměnlivé počasí";
 }
 
-function getTargetDate(query){
- const now = new Date();
- const date = new Date(now.getFullYear(),now.getMonth(),now.getDate());
- const q = query.toLowerCase();
+function getTargetDate(query) {
+    const now = new Date();
 
- if(q.includes("pozítří")){
-  date.setDate(date.getDate()+2);
-  return date;
- }
+    const date = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+    );
 
- if(q.includes("zítra")){
-  date.setDate(date.getDate()+1);
-  return date;
- }
+    const q = query.toLowerCase();
 
- const weekdays = {
-  "neděli":0,"pondělí":1,"úterý":2,
-  "středu":3,"čtvrtek":4,"pátek":5,"sobotu":6
- };
+    if (q.includes("pozítří")) {
+        date.setDate(date.getDate() + 2);
+        return date;
+    }
 
- for(const [name,day] of Object.entries(weekdays)){
-  if(q.includes(name)){
-   let difference = (day-date.getDay()+7)%7;
-   date.setDate(date.getDate()+difference);
-   return date;
-  }
- }
+    if (q.includes("zítra")) {
+        date.setDate(date.getDate() + 1);
+        return date;
+    }
 
- return date;
+    const weekdays = {
+        "neděli": 0,
+        "pondělí": 1,
+        "úterý": 2,
+        "středu": 3,
+        "čtvrtek": 4,
+        "pátek": 5,
+        "sobotu": 6
+    };
+
+    for (const [name, day] of Object.entries(weekdays)) {
+        if (q.includes(name)) {
+            let difference = (day - date.getDay() + 7) % 7;
+
+            if (difference === 0) {
+                difference = 7;
+            }
+
+            date.setDate(date.getDate() + difference);
+            return date;
+        }
+    }
+
+    return date;
 }
 
-function dateToISO(date){
- const year = date.getFullYear();
- const month = String(date.getMonth()+1).padStart(2,"0");
- const day = String(date.getDate()).padStart(2,"0");
- return `${year}-${month}-${day}`;
+function dateToISO(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
-async function getWeather(query){
- const targetDate = getTargetDate(query);
- const today = new Date();
- today.setHours(0,0,0,0);
+async function getWeather(query) {
+    const targetDate = getTargetDate(query);
 
- const difference = Math.round((targetDate-today)/86400000);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
- if(difference < 0 || difference > 15){
-  return "Předpověď pro tento den zatím není dostupná. Zkus datum v následujících 15 dnech.";
- }
+    const difference = Math.round(
+        (targetDate - today) / 86400000
+    );
 
- const url =
-  "https://api.open-meteo.com/v1/forecast" +
-  "?latitude=48.905" +
-  "&longitude=16.95" +
-  "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
-  "&timezone=Europe%2FPrague" +
-  "&forecast_days=16";
+    if (difference < 0 || difference > 15) {
+        return "Předpověď pro tento den zatím není dostupná. Zkus datum v následujících 15 dnech.";
+    }
 
- const response = await fetch(url);
+    const url =
+        "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=48.905" +
+        "&longitude=16.95" +
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+        "&timezone=Europe%2FPrague" +
+        "&forecast_days=16";
 
- if(!response.ok){
-  throw new Error("Nepodařilo se načíst předpověď počasí.");
- }
+    const response = await fetch(url);
 
- const data = await response.json();
+    if (!response.ok) {
+        throw new Error("Nepodařilo se načíst předpověď počasí.");
+    }
 
- if(!data.daily || !data.daily.time){
-  throw new Error("Meteorologická služba nevrátila předpověď.");
- }
+    const data = await response.json();
 
- const wantedDate = dateToISO(targetDate);
- const index = data.daily.time.indexOf(wantedDate);
+    if (!data.daily || !data.daily.time) {
+        throw new Error("Meteorologická služba nevrátila předpověď.");
+    }
 
- if(index === -1){
-  return "Předpověď pro vybraný den není dostupná.";
- }
+    const wantedDate = dateToISO(targetDate);
+    const index = data.daily.time.indexOf(wantedDate);
 
- const min = data.daily.temperature_2m_min[index];
- const max = data.daily.temperature_2m_max[index];
- const rain = data.daily.precipitation_probability_max[index];
- const code = data.daily.weather_code[index];
+    if (index === -1) {
+        return "Předpověď pro vybraný den není dostupná.";
+    }
 
- const dateText = targetDate.toLocaleDateString("cs-CZ",{
-  weekday:"long",day:"numeric",month:"long"
- });
+    const min = data.daily.temperature_2m_min[index];
+    const max = data.daily.temperature_2m_max[index];
+    const rain = data.daily.precipitation_probability_max[index];
+    const code = data.daily.weather_code[index];
 
- return `## 🌤️ Počasí – Čejkovice
+    const dateText = targetDate.toLocaleDateString("cs-CZ", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+    });
+
+    return `## 🌤️ Počasí – Čejkovice
 
 **📅 ${dateText}**
 
@@ -401,219 +819,330 @@ async function getWeather(query){
 *Předpověď se může ještě změnit.*`;
 }
 
+// ==========================================
 // MÍSTNÍ ODPOVĚDI
-async function getLocalAnswer(query){
- const q = query.toLowerCase();
+// ==========================================
 
- if(q.includes("kolik je hodin") || q === "čas"){
-  return "Právě je **" + new Date().toLocaleTimeString("cs-CZ",{
-   hour:"2-digit",minute:"2-digit"
-  }) + "** podle času tvého zařízení.";
- }
+async function getLocalAnswer(query) {
+    const q = query.toLowerCase();
 
- if(
-  q.includes("počasí") ||
-  q.includes("předpověď") ||
-  q.includes("kolik bude stupň") ||
-  q.includes("teplota")
- ){
-  return await getWeather(query);
- }
+    if (
+        q.includes("kolik je hodin") ||
+        q === "čas"
+    ) {
+        return "Právě je **" +
+            new Date().toLocaleTimeString("cs-CZ", {
+                hour: "2-digit",
+                minute: "2-digit"
+            }) +
+            "** podle času tvého zařízení.";
+    }
 
- return null;
+    if (
+        q.includes("počasí") ||
+        q.includes("předpověď") ||
+        q.includes("kolik bude stupň") ||
+        q.includes("teplota")
+    ) {
+        return await getWeather(query);
+    }
+
+    return null;
 }
 
-// KOMUNIKACE S AI
+// ==========================================
+// KOMUNIKACE S CLOUDFLARE WORKEREM
+// ==========================================
 
-async function askAI(query){
- const history = conversation.slice(-12).map(item =>
-  (item.role === "user" ? "Uživatel: " : "Asistent: ") + item.content
- ).join("\n");
+async function askAI(query) {
+    const history = conversation.slice(-13, -1).map(item =>
+        (item.role === "user" ? "Uživatel: " : "Asistent: ") +
+        item.content
+    ).join("\n");
 
- const message =
-  "Jsi AntZadEn AI Assistant. Odpovídej česky, přátelsky a pravdivě.\n\n" +
-  (history ? "PŘEDCHOZÍ KONVERZACE:\n" + history + "\n\n" : "") +
-  "NOVÁ ZPRÁVA:\n" + query;
+    const message =
+        "Jsi AntZadEn AI Assistant. Odpovídej česky, přátelsky a pravdivě.\n\n" +
+        (history ? "PŘEDCHOZÍ KONVERZACE:\n" + history + "\n\n" : "") +
+        "NOVÁ ZPRÁVA:\n" + query;
 
- const controller = new AbortController();
- const timeout = setTimeout(() => controller.abort(), 30000);
+    const controller = new AbortController();
 
- try {
-  const response = await fetch(WORKER_URL,{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({message}),
-   signal:controller.signal
-  });
+    const timeout = setTimeout(() => {
+        controller.abort();
+    }, 60000);
 
-  const raw = await response.text();
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: message
+            }),
+            signal: controller.signal
+        });
 
-  let data;
-  try {
-   data = JSON.parse(raw);
-  } catch(e) {
-   throw new Error("Cloudflare vrátil neplatnou odpověď: " + raw.slice(0,200));
-  }
+        const raw = await response.text();
 
-  if(!response.ok){
-   throw new Error(data.error || "Chyba serveru: " + response.status);
-  }
+        let data;
 
-  if(!data.reply){
-   throw new Error("AI nevrátila žádnou odpověď.");
-  }
+        try {
+            data = JSON.parse(raw);
+        } catch (error) {
+            throw new Error(
+                "Cloudflare vrátil neplatnou odpověď: " +
+                raw.slice(0, 200)
+            );
+        }
 
-  return data.reply;
+        if (!response.ok) {
+            throw new Error(
+                data.error || "Chyba serveru: " + response.status
+            );
+        }
 
- } catch(error) {
-  if(error.name === "AbortError"){
-   throw new Error("AI neodpověděla do 30 sekund. Zkontroluj Cloudflare Worker.");
-  }
+        if (!data.reply) {
+            throw new Error("AI nevrátila žádnou odpověď.");
+        }
 
-  throw error;
+        return data.reply;
 
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new Error(
+                "AI neodpověděla do 60 sekund. Zkontroluj Cloudflare Worker."
+            );
+        }
+
+        throw error;
+
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+// ==========================================
 // ANIMACE PSANÍ
-async function typeAnswer(element,text){
- const step = 4;
+// ==========================================
 
- for(let i=0;i<text.length;i+=step){
-  element.textContent = text.slice(0,i+step);
-  scrollDown();
-  await new Promise(resolve=>setTimeout(resolve,12));
- }
+async function typeAnswer(element, text) {
+    const characters = Array.from(String(text));
+    const step = 4;
 
- element.innerHTML = renderMarkdown(text);
- scrollDown();
+    element.textContent = "";
+
+    for (let i = 0; i < characters.length; i += step) {
+        element.textContent = characters.slice(0, i + step).join("");
+
+        scrollDown();
+
+        await new Promise(resolve => setTimeout(resolve, 12));
+    }
+
+    element.innerHTML = renderMarkdown(text);
+    scrollDown();
 }
 
+// ==========================================
 // HLASOVÝ VÝSTUP
-function speakAnswer(text){
- if(!voiceEnabled || !("speechSynthesis" in window)) return;
+// ==========================================
 
- window.speechSynthesis.cancel();
+function speakAnswer(text) {
+    if (!voiceEnabled || !("speechSynthesis" in window)) {
+        return;
+    }
 
- const cleanText = text
-  .replace(/```[\s\S]*?```/g,"Kód")
-  .replace(/[#*`_]/g,"")
-  .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
+    window.speechSynthesis.cancel();
 
- const speech = new SpeechSynthesisUtterance(cleanText);
- speech.lang = "cs-CZ";
- speech.rate = 1;
+    const cleanText = text
+        .replace(/```[\s\S]*?```/g, "Kód")
+        .replace(/[#*`_]/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
- window.speechSynthesis.speak(speech);
+    const speech = new SpeechSynthesisUtterance(cleanText);
+
+    speech.lang = "cs-CZ";
+    speech.rate = 1;
+
+    window.speechSynthesis.speak(speech);
 }
 
-document.getElementById("voice-toggle").onclick = function(){
- voiceEnabled = !voiceEnabled;
- this.textContent = voiceEnabled ? "🔊 Hlas: zapnutý" : "🔇 Hlas: vypnutý";
+const voiceToggle = document.getElementById("voice-toggle");
 
- if(!voiceEnabled && "speechSynthesis" in window){
-  window.speechSynthesis.cancel();
- }
-};
+if (voiceToggle) {
+    voiceToggle.onclick = function() {
+        voiceEnabled = !voiceEnabled;
 
+        this.textContent = voiceEnabled
+            ? "🔊 Hlas: zapnutý"
+            : "🔊 Hlas: vypnutý";
+
+        if (
+            !voiceEnabled &&
+            "speechSynthesis" in window
+        ) {
+            window.speechSynthesis.cancel();
+        }
+    };
+}
+
+// ==========================================
 // HLASOVÉ ZADÁVÁNÍ
-const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// ==========================================
+
+const Recognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
 const mic = document.getElementById("voice-mic");
 const voiceStatus = document.getElementById("voice-status");
 
-if(Recognition){
- recognition = new Recognition();
- recognition.lang = "cs-CZ";
- recognition.continuous = false;
- recognition.interimResults = false;
+if (Recognition && mic) {
+    recognition = new Recognition();
 
- mic.onclick = () => {
-  if(listening) return;
+    recognition.lang = "cs-CZ";
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
-  try{
-   recognition.start();
-   listening = true;
-   voiceStatus.textContent = "🎤 Poslouchám...";
-  }catch(e){
-   voiceStatus.textContent = "Mikrofon se nepodařilo spustit.";
-  }
- };
+    mic.onclick = () => {
+        if (listening) return;
 
- recognition.onresult = event => {
-  const spoken = event.results[0][0].transcript;
-  input.value = spoken;
-  voiceStatus.textContent = "Rozpoznáno: " + spoken;
-  form.requestSubmit();
- };
+        try {
+            recognition.start();
 
- recognition.onerror = event => {
-  voiceStatus.textContent = "Chyba mikrofonu: " + event.error;
- };
+            listening = true;
 
- recognition.onend = () => {
-  listening = false;
-  if(voiceStatus.textContent === "🎤 Poslouchám..."){
-   voiceStatus.textContent = "Hlas připraven";
-  }
- };
-}else{
- mic.disabled = true;
- voiceStatus.textContent = "Hlasové zadávání tento prohlížeč nepodporuje.";
+            if (voiceStatus) {
+                voiceStatus.textContent = "🎤 Poslouchám...";
+            }
+
+        } catch (error) {
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    "Mikrofon se nepodařilo spustit.";
+            }
+        }
+    };
+
+    recognition.onresult = event => {
+        const spoken = event.results[0][0].transcript;
+
+        input.value = spoken;
+
+        if (voiceStatus) {
+            voiceStatus.textContent = "Rozpoznáno: " + spoken;
+        }
+
+        form.requestSubmit();
+    };
+
+    recognition.onerror = event => {
+        if (voiceStatus) {
+            voiceStatus.textContent =
+                "Chyba mikrofonu: " + event.error;
+        }
+    };
+
+    recognition.onend = () => {
+        listening = false;
+
+        if (
+            voiceStatus &&
+            voiceStatus.textContent === "🎤 Poslouchám..."
+        ) {
+            voiceStatus.textContent = "Hlas připraven";
+        }
+    };
+
+} else if (mic) {
+    mic.disabled = true;
+
+    if (voiceStatus) {
+        voiceStatus.textContent =
+            "Hlasové zadávání tento prohlížeč nepodporuje.";
+    }
 }
 
+// ==========================================
 // ODESÍLÁNÍ ZPRÁV
-form.addEventListener("submit",async function(e){
- e.preventDefault();
+// ==========================================
 
- const query = input.value.trim();
- if(!query || busy) return;
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
 
- busy = true;
- send.disabled = true;
- input.disabled = true;
+    const query = input.value.trim();
 
- addMessage(query,true);
- input.value = "";
+    if (!query || busy) return;
 
- conversation.push({role:"user",content:query});
+    busy = true;
 
- typing.style.display = "flex";
- scrollDown();
+    send.disabled = true;
+    input.disabled = true;
 
- try{
-  let answer = await getLocalAnswer(query);
+    addMessage(query, true);
 
-  if(answer === null){
-   answer = await askAI(query);
-  }
+    input.value = "";
 
-  typing.style.display = "none";
+    conversation.push({
+        role: "user",
+        content: query
+    });
 
-  const target = addMessage("",false);
-  await typeAnswer(target,answer);
+    typing.style.display = "flex";
+    scrollDown();
 
-  conversation.push({role:"assistant",content:answer});
+    try {
+        let answer = await getLocalAnswer(query);
 
-  if(conversation.length > 24){
-   conversation = conversation.slice(-24);
-  }
+        if (answer === null) {
+            answer = await askAI(query);
+        }
 
-  speakAnswer(answer);
+        typing.style.display = "none";
 
- }catch(error){
-  typing.style.display = "none";
+        const target = addMessage("", false);
 
-  addMessage(
-   "Nepodařilo se získat odpověď.\n\n" +
-   error.message
-  );
+        await typeAnswer(target, answer);
 
-  console.error(error);
+        conversation.push({
+            role: "assistant",
+            content: answer
+        });
 
- }finally{
-  busy = false;
-  send.disabled = false;
-  input.disabled = false;
-  input.focus();
- }
+        if (conversation.length > 24) {
+            conversation = conversation.slice(-24);
+        }
+
+        speakAnswer(answer);
+
+    } catch (error) {
+        typing.style.display = "none";
+
+        addMessage(
+            "Nepodařilo se získat odpověď.\n\n" +
+            error.message
+        );
+
+        console.error("AntZadEn AI:", error);
+
+    } finally {
+        busy = false;
+
+        send.disabled = false;
+        input.disabled = false;
+        input.focus();
+
+        scrollDown();
+    }
 });
+
+// ==========================================
+// SPUŠTĚNÍ
+// ==========================================
+
+console.log("AntZadEn AI Assistant byl úspěšně načten.");
+
 </script>
 
 </body>
