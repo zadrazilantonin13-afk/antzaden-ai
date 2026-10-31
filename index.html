@@ -132,7 +132,9 @@ function scrollDown(){
 
 // BEZPEČNÉ ZPRACOVÁNÍ MARKDOWNU
 function escapeHTML(text){
- return text
+ function escapeHTML(text){
+  
+ return String(text)
   .replace(/&/g,"&amp;")
   .replace(/</g,"&lt;")
   .replace(/>/g,"&gt;")
