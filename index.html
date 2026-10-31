@@ -1,0 +1,240 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090d0b">
+<title>AntZadEn AI Assistant</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;height:100dvh;background:#090d0b;color:#edf5ef;font-family:Arial, sans-serif;display:flex;flex-direction:column;overflow:hidden}
+header{padding:17px 22px;background:#101713;border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
+h1{font-size:18px;margin:0}
+.sub{font-size:11px;color:#91a397;margin-top:4px}
+.status{color:#55e879;font-size:12px}
+.quick{display:flex;gap:8px;padding:12px;background:#0c120e;overflow-x:auto}
+.quick button{white-space:nowrap;background:#151e18;color:#c6d5ca;border:1px solid #304235;border-radius:22px;padding:9px 14px;cursor:pointer}
+.quick button:hover{border-color:#55e879;color:white}
+main{width:100%;max-width:950px;margin:auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 16px 0}
+#chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;padding:5px 3px 20px;scroll-behavior:smooth}
+.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.55;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;animation:appear .2s ease}
+@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.bot{align-self:flex-start;background:#141e17;border:1px solid #2a3b2e;border-bottom-left-radius:5px}
+.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px}
+.botname{font-size:10px;color:#55e879;font-weight:bold;letter-spacing:1px;margin-bottom:6px}
+#typing{display:none;align-self:flex-start;align-items:center;gap:10px;padding:12px 15px;background:#111a14;border:1px solid #2a3b2e;border-radius:16px;color:#91a397;font-size:12px}
+.spinner{width:15px;height:15px;border:2px solid #34513b;border-top-color:#55e879;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bottom{padding:13px 0 18px;border-top:1px solid #1b2a20}
+form{display:flex;gap:10px;align-items:center;background:#111914;border:1px solid #304235;border-radius:17px;padding:8px 9px 8px 16px}
+input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
+input::placeholder{color:#718077}
+#send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px;cursor:pointer}
+#send:disabled{opacity:.5}
+.hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
+@media(max-width:600px){header{padding:13px}.message{max-width:92%;font-size:13px}main{padding:12px 11px 0}.quick{padding:10px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">
+  <div class="logo">A</div>
+  <div>
+   <h1>AntZadEn AI Assistant</h1>
+   <div class="sub">Tvůj osobní AI asistent</div>
+  </div>
+ </div>
+ <div class="status">● ONLINE</div>
+</header>
+
+<div class="quick">
+ <button onclick="quickAsk('Co je to AntZadEn?')">💡 Co je AntZadEn?</button>
+ <button onclick="quickAsk('Napiš básničku o AntZadEn.')">✍️ Básnička</button>
+ <button onclick="quickAsk('Kolik je hodin?')">🕒 Kolik je hodin?</button>
+ <button onclick="quickAsk('Jaké je počasí v České republice?')">🌤️ Počasí</button>
+</div>
+
+<main>
+ <section id="chat" aria-live="polite">
+  <div class="message bot">
+   <div class="botname">ANTZADEN AI</div>
+   Ahoj! 👋 Jsem AntZadEn AI Assistant. Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
+  </div>
+  <div id="typing"><span class="spinner"></span> AntZadEn AI přemýšlí…</div>
+ </section>
+
+ <div class="bottom">
+  <form id="form">
+   <input id="input" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
+   <button id="send" type="submit">➤</button>
+  </form>
+  <div class="hint">AntZadEn AI • Powered by Gemini</div>
+ </div>
+</main>
+
+<script>
+const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const form = document.getElementById("form");
+const send = document.getElementById("send");
+const typing = document.getElementById("typing");
+
+let busy = false;
+let conversation = [];
+
+function scrollDown(){
+ chat.scrollTop = chat.scrollHeight;
+}
+
+function addMessage(text, user = false){
+ const box = document.createElement("div");
+ box.className = "message " + (user ? "user" : "bot");
+
+ if(!user){
+  const name = document.createElement("div");
+  name.className = "botname";
+  name.textContent = "ANTZADEN AI";
+  box.appendChild(name);
+ }
+
+ const content = document.createElement("div");
+ content.textContent = text;
+ box.appendChild(content);
+
+ chat.insertBefore(box, typing);
+ scrollDown();
+ return content;
+}
+
+function quickAsk(text){
+ input.value = text;
+ form.requestSubmit();
+}
+
+async function typeAnswer(element, text){
+ const step = 4;
+ for(let i = 0; i < text.length; i += step){
+  element.textContent = text.slice(0, i + step);
+  scrollDown();
+  await new Promise(resolve => setTimeout(resolve, 12));
+ }
+ element.textContent = text;
+}
+
+async function getLocalAnswer(query){
+ const q = query.toLowerCase();
+
+ if(q.includes("kolik je hodin") || q === "čas"){
+  return "Právě je " + new Date().toLocaleTimeString("cs-CZ", {
+   hour:"2-digit", minute:"2-digit"
+  }) + " podle času tvého zařízení.";
+ }
+
+ if(q.includes("počasí") || q.includes("stupň") || q.includes("teplota")){
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9&longitude=16.3&current=temperature_2m&timezone=Europe%2FPrague";
+  const response = await fetch(url);
+  if(!response.ok) throw new Error("Počasí se nepodařilo načíst.");
+  const data = await response.json();
+
+  if(data.current){
+   return "V oblasti středu České republiky je právě přibližně " +
+    data.current.temperature_2m + " °C. V různých částech ČR se teplota liší.";
+  }
+  throw new Error("Meteorologická služba nevrátila údaje.");
+ }
+
+ return null;
+}
+
+async function askAI(query){
+ const history = conversation.slice(-12).map(item =>
+  (item.role === "user" ? "Uživatel: " : "Asistent: ") + item.content
+ ).join("\n");
+
+ const message =
+  "Jsi AntZadEn AI Assistant. Odpovídej česky, přátelsky, srozumitelně a pravdivě. Pomáhej s AntZadEn, Robloxem, weby, programováním a běžnými otázkami. Pokud něco nevíš, přiznej to.\n\n" +
+  (history ? "PŘEDCHOZÍ KONVERZACE:\n" + history + "\n\n" : "") +
+  "NOVÁ ZPRÁVA:\n" + query;
+
+ const response = await fetch(WORKER_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({message:message})
+ });
+
+ let data;
+ try{
+  data = await response.json();
+ }catch(e){
+  throw new Error("Server nevrátil platnou odpověď.");
+ }
+
+ if(!response.ok){
+  throw new Error(data.error || "Chyba serveru: " + response.status);
+ }
+
+ if(!data.reply){
+  throw new Error("Gemini nevrátilo odpověď.");
+ }
+
+ return data.reply;
+}
+
+form.addEventListener("submit", async function(e){
+ e.preventDefault();
+
+ const query = input.value.trim();
+ if(!query || busy) return;
+
+ busy = true;
+ send.disabled = true;
+ input.disabled = true;
+
+ addMessage(query,true);
+ input.value = "";
+ conversation.push({role:"user",content:query});
+
+ typing.style.display = "flex";
+ scrollDown();
+
+ try{
+  let answer = await getLocalAnswer(query);
+
+  if(answer === null){
+   answer = await askAI(query);
+  }
+
+  typing.style.display = "none";
+
+  const target = addMessage("",false);
+  await typeAnswer(target,answer);
+
+  conversation.push({role:"assistant",content:answer});
+
+  if(conversation.length > 24){
+   conversation = conversation.slice(-24);
+  }
+
+ }catch(error){
+  typing.style.display = "none";
+  addMessage(
+   "Nepodařilo se spojit s AI mozkem.\n\n" +
+   error.message +
+   "\n\nZkontroluj Cloudflare Worker a Gemini API klíč."
+  );
+  console.error(error);
+ }finally{
+  busy = false;
+  send.disabled = false;
+  input.disabled = false;
+  input.focus();
+ }
+});
+</script>
+</body>
+</html>
