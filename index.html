@@ -21,11 +21,26 @@ h1{font-size:18px;margin:0}
 .quick button:hover{border-color:#55e879;color:white}
 main{width:100%;max-width:950px;margin:auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 16px 0}
 #chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;padding:5px 3px 20px;scroll-behavior:smooth}
-.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.55;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;animation:appear .2s ease}
+.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.6;font-size:14px;overflow-wrap:anywhere;animation:appear .2s ease}
 @keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .bot{align-self:flex-start;background:#141e17;border:1px solid #2a3b2e;border-bottom-left-radius:5px}
-.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px}
-.botname{font-size:10px;color:#55e879;font-weight:bold;letter-spacing:1px;margin-bottom:6px}
+.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px;white-space:pre-wrap}
+.botname{font-size:10px;color:#55e879;font-weight:bold;letter-spacing:1px;margin-bottom:7px}
+.markdown{overflow-wrap:anywhere}
+.markdown strong{color:#75f596;font-weight:800}
+.markdown em{color:#c6d5ca}
+.markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3;margin:13px 0 7px}
+.markdown h1{font-size:21px}
+.markdown h2{font-size:18px}
+.markdown h3{font-size:16px}
+.markdown p{margin:7px 0}
+.markdown ul,.markdown ol{padding-left:23px;margin:8px 0}
+.markdown li{margin:5px 0}
+.markdown a{color:#78f49a;text-decoration:underline}
+.markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
+.markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
+.markdown pre code{background:none;padding:0;color:#b8f5c6}
+.markdown blockquote{border-left:3px solid #55e879;margin:9px 0;padding:4px 12px;color:#b7c9bc}
 #typing{display:none;align-self:flex-start;align-items:center;gap:10px;padding:12px 15px;background:#111a14;border:1px solid #2a3b2e;border-radius:16px;color:#91a397;font-size:12px}
 .spinner{width:15px;height:15px;border:2px solid #34513b;border-top-color:#55e879;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -35,12 +50,17 @@ input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;f
 input::placeholder{color:#718077}
 #send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px;cursor:pointer}
 #send:disabled{opacity:.5}
+.voicebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
+.voicebar button{background:#14251a;border:1px solid #35543c;color:#a6f5b8;border-radius:10px;padding:9px 13px;cursor:pointer}
+.voicebar button:hover{border-color:#55e879}
+#voice-status{font-size:11px;color:#91a397}
 .hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
-@media(max-width:600px){header{padding:13px}.message{max-width:92%;font-size:13px}main{padding:12px 11px 0}.quick{padding:10px}}
+@media(max-width:600px){header{padding:13px}.message{max-width:94%;font-size:13px}main{padding:12px 11px 0}.quick{padding:10px}}
 </style>
 </head>
 
 <body>
+
 <header>
  <div class="brand">
   <div class="logo">A</div>
@@ -63,7 +83,10 @@ input::placeholder{color:#718077}
  <section id="chat" aria-live="polite">
   <div class="message bot">
    <div class="botname">ANTZADEN AI</div>
-   Ahoj! 👋 Jsem AntZadEn AI Assistant. Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
+   <div class="markdown">
+    Ahoj! 👋 Jsem <strong>AntZadEn AI Assistant</strong>.<br>
+    Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
+   </div>
   </div>
   <div id="typing">
    <span class="spinner"></span>
@@ -76,6 +99,13 @@ input::placeholder{color:#718077}
    <input id="input" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
    <button id="send" type="submit">➤</button>
   </form>
+
+  <div class="voicebar">
+   <button type="button" id="voice-mic">🎤 Mluvit</button>
+   <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
+   <span id="voice-status">Hlas připraven</span>
+  </div>
+
   <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI</div>
  </div>
 </main>
@@ -91,17 +121,146 @@ const typing = document.getElementById("typing");
 
 let busy = false;
 let conversation = [];
- 
-const content = document.createElement("div");
-content.className = "markdown";
-content.innerHTML = renderMarkdown(text);
-box.appendChild(content);
- 
+let voiceEnabled = false;
+let recognition = null;
+let listening = false;
+
+// POSOUVÁNÍ CHATU
 function scrollDown(){
  chat.scrollTop = chat.scrollHeight;
 }
 
-function addMessage(text, user = false){
+// BEZPEČNÉ ZPRACOVÁNÍ MARKDOWNU
+function escapeHTML(text){
+ return text
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+}
+
+function inlineMarkdown(text){
+ let html = escapeHTML(text);
+
+ // Odkazy pouze na HTTP/HTTPS adresy
+ html = html.replace(
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+  '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+ );
+
+ // Inline kód
+ html = html.replace(/`([^`]+)`/g,"<code>$1</code>");
+
+ // Tučné písmo
+ html = html.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
+ html = html.replace(/__(.+?)__/g,"<strong>$1</strong>");
+
+ // Kurzíva
+ html = html.replace(/\*(.+?)\*/g,"<em>$1</em>");
+ html = html.replace(/_(.+?)_/g,"<em>$1</em>");
+
+ return html;
+}
+
+function renderMarkdown(text){
+ const lines = text.split("\n");
+ let html = "";
+ let inCode = false;
+ let codeLines = [];
+ let listType = null;
+ let paragraph = [];
+
+ function closeList(){
+  if(listType){
+   html += listType === "ul" ? "</ul>" : "</ol>";
+   listType = null;
+  }
+ }
+
+ function flushParagraph(){
+  if(paragraph.length){
+   html += "<p>" + paragraph.map(inlineMarkdown).join("<br>") + "</p>";
+   paragraph = [];
+  }
+ }
+
+ for(const line of lines){
+  if(line.trim().startsWith("```")){
+   flushParagraph();
+   closeList();
+
+   if(inCode){
+    html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+    codeLines = [];
+    inCode = false;
+   }else{
+    inCode = true;
+   }
+   continue;
+  }
+
+  if(inCode){
+   codeLines.push(line);
+   continue;
+  }
+
+  const heading = line.match(/^(#{1,3})\s+(.+)$/);
+  if(heading){
+   flushParagraph();
+   closeList();
+   const level = heading[1].length;
+   html += `<h${level}>${inlineMarkdown(heading[2])}</h${level}>`;
+   continue;
+  }
+
+  const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+  const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+
+  if(bullet || numbered){
+   flushParagraph();
+   const type = bullet ? "ul" : "ol";
+
+   if(listType !== type){
+    closeList();
+    html += type === "ul" ? "<ul>" : "<ol>";
+    listType = type;
+   }
+
+   html += "<li>" + inlineMarkdown((bullet || numbered)[1]) + "</li>";
+   continue;
+  }
+
+  const quote = line.match(/^\s*&gt;\s?(.*)$/);
+  if(quote){
+   flushParagraph();
+   closeList();
+   html += "<blockquote>" + inlineMarkdown(quote[1]) + "</blockquote>";
+   continue;
+  }
+
+  if(!line.trim()){
+   flushParagraph();
+   closeList();
+   continue;
+  }
+
+  closeList();
+  paragraph.push(line);
+ }
+
+ if(inCode){
+  html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+ }
+
+ flushParagraph();
+ closeList();
+
+ return html;
+}
+
+// ZPRÁVY
+function addMessage(text,user=false){
  const box = document.createElement("div");
  box.className = "message " + (user ? "user" : "bot");
 
@@ -113,10 +272,16 @@ function addMessage(text, user = false){
  }
 
  const content = document.createElement("div");
- content.textContent = text;
- box.appendChild(content);
 
- chat.insertBefore(box, typing);
+ if(user){
+  content.textContent = text;
+ }else{
+  content.className = "markdown";
+  content.innerHTML = renderMarkdown(text);
+ }
+
+ box.appendChild(content);
+ chat.insertBefore(box,typing);
  scrollDown();
  return content;
 }
@@ -126,36 +291,20 @@ function quickAsk(text){
  form.requestSubmit();
 }
 
-// Převod počasí na český popis
+// POČASÍ
 function weatherDescription(code){
  const descriptions = {
-  0:"jasno",
-  1:"převážně jasno",
-  2:"polojasno",
-  3:"zataženo",
-  45:"mlha",
-  48:"mrznoucí mlha",
-  51:"slabé mrholení",
-  53:"mrholení",
-  55:"silné mrholení",
-  61:"slabý déšť",
-  63:"déšť",
-  65:"silný déšť",
-  71:"slabé sněžení",
-  73:"sněžení",
-  75:"silné sněžení",
-  80:"přeháňky",
-  81:"silnější přeháňky",
-  82:"prudké přeháňky",
-  95:"bouřky",
-  96:"bouřky s kroupami",
-  99:"silné bouřky s kroupami"
+  0:"jasno",1:"převážně jasno",2:"polojasno",3:"zataženo",
+  45:"mlha",48:"mrznoucí mlha",
+  51:"slabé mrholení",53:"mrholení",55:"silné mrholení",
+  61:"slabý déšť",63:"déšť",65:"silný déšť",
+  71:"slabé sněžení",73:"sněžení",75:"silné sněžení",
+  80:"přeháňky",81:"silnější přeháňky",82:"prudké přeháňky",
+  95:"bouřky",96:"bouřky s kroupami",99:"silné bouřky s kroupami"
  };
-
  return descriptions[code] || "proměnlivé počasí";
 }
 
-// Výběr dne podle otázky
 function getTargetDate(query){
  const now = new Date();
  const date = new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -172,13 +321,8 @@ function getTargetDate(query){
  }
 
  const weekdays = {
-  "neděli":0,
-  "pondělí":1,
-  "úterý":2,
-  "středu":3,
-  "čtvrtek":4,
-  "pátek":5,
-  "sobotu":6
+  "neděli":0,"pondělí":1,"úterý":2,
+  "středu":3,"čtvrtek":4,"pátek":5,"sobotu":6
  };
 
  for(const [name,day] of Object.entries(weekdays)){
@@ -204,9 +348,7 @@ async function getWeather(query){
  const today = new Date();
  today.setHours(0,0,0,0);
 
- const difference = Math.round(
-  (targetDate-today)/86400000
- );
+ const difference = Math.round((targetDate-today)/86400000);
 
  if(difference < 0 || difference > 15){
   return "Předpověď pro tento den zatím není dostupná. Zkus datum v následujících 15 dnech.";
@@ -245,30 +387,28 @@ async function getWeather(query){
  const code = data.daily.weather_code[index];
 
  const dateText = targetDate.toLocaleDateString("cs-CZ",{
-  weekday:"long",
-  day:"numeric",
-  month:"long"
+  weekday:"long",day:"numeric",month:"long"
  });
 
- return `🌤️ Předpověď počasí pro Čejkovice
+ return `## 🌤️ Počasí – Čejkovice
 
-📅 ${dateText}
+**📅 ${dateText}**
 
-🌡️ Teplota: ${min} až ${max} °C
-☁️ Počasí: ${weatherDescription(code)}
-🌧️ Pravděpodobnost srážek: ${rain ?? "údaj není dostupný"} %
+- 🌡️ Teplota: **${min} až ${max} °C**
+- ☁️ Počasí: **${weatherDescription(code)}**
+- 🌧️ Pravděpodobnost srážek: **${rain ?? "údaj není dostupný"} %**
 
-Jde o předpověď, která se může ještě změnit.`;
+*Předpověď se může ještě změnit.*`;
 }
 
+// MÍSTNÍ ODPOVĚDI
 async function getLocalAnswer(query){
  const q = query.toLowerCase();
 
  if(q.includes("kolik je hodin") || q === "čas"){
-  return "Právě je " + new Date().toLocaleTimeString("cs-CZ",{
-   hour:"2-digit",
-   minute:"2-digit"
-  }) + " podle času tvého zařízení.";
+  return "Právě je **" + new Date().toLocaleTimeString("cs-CZ",{
+   hour:"2-digit",minute:"2-digit"
+  }) + "** podle času tvého zařízení.";
  }
 
  if(
@@ -283,6 +423,7 @@ async function getLocalAnswer(query){
  return null;
 }
 
+// KOMUNIKACE S AI
 async function askAI(query){
  const history = conversation.slice(-12).map(item =>
   (item.role === "user" ? "Uživatel: " : "Asistent: ") + item.content
@@ -297,7 +438,7 @@ async function askAI(query){
  const response = await fetch(WORKER_URL,{
   method:"POST",
   headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({message:message})
+  body:JSON.stringify({message})
  });
 
  let data;
@@ -319,6 +460,7 @@ async function askAI(query){
  return data.reply;
 }
 
+// ANIMACE PSANÍ
 async function typeAnswer(element,text){
  const step = 4;
 
@@ -328,9 +470,83 @@ async function typeAnswer(element,text){
   await new Promise(resolve=>setTimeout(resolve,12));
  }
 
- element.textContent = text;
+ element.innerHTML = renderMarkdown(text);
+ scrollDown();
 }
 
+// HLASOVÝ VÝSTUP
+function speakAnswer(text){
+ if(!voiceEnabled || !("speechSynthesis" in window)) return;
+
+ window.speechSynthesis.cancel();
+
+ const cleanText = text
+  .replace(/```[\s\S]*?```/g,"Kód")
+  .replace(/[#*`_]/g,"")
+  .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
+
+ const speech = new SpeechSynthesisUtterance(cleanText);
+ speech.lang = "cs-CZ";
+ speech.rate = 1;
+
+ window.speechSynthesis.speak(speech);
+}
+
+document.getElementById("voice-toggle").onclick = function(){
+ voiceEnabled = !voiceEnabled;
+ this.textContent = voiceEnabled ? "🔊 Hlas: zapnutý" : "🔇 Hlas: vypnutý";
+
+ if(!voiceEnabled && "speechSynthesis" in window){
+  window.speechSynthesis.cancel();
+ }
+};
+
+// HLASOVÉ ZADÁVÁNÍ
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = document.getElementById("voice-mic");
+const voiceStatus = document.getElementById("voice-status");
+
+if(Recognition){
+ recognition = new Recognition();
+ recognition.lang = "cs-CZ";
+ recognition.continuous = false;
+ recognition.interimResults = false;
+
+ mic.onclick = () => {
+  if(listening) return;
+
+  try{
+   recognition.start();
+   listening = true;
+   voiceStatus.textContent = "🎤 Poslouchám...";
+  }catch(e){
+   voiceStatus.textContent = "Mikrofon se nepodařilo spustit.";
+  }
+ };
+
+ recognition.onresult = event => {
+  const spoken = event.results[0][0].transcript;
+  input.value = spoken;
+  voiceStatus.textContent = "Rozpoznáno: " + spoken;
+  form.requestSubmit();
+ };
+
+ recognition.onerror = event => {
+  voiceStatus.textContent = "Chyba mikrofonu: " + event.error;
+ };
+
+ recognition.onend = () => {
+  listening = false;
+  if(voiceStatus.textContent === "🎤 Poslouchám..."){
+   voiceStatus.textContent = "Hlas připraven";
+  }
+ };
+}else{
+ mic.disabled = true;
+ voiceStatus.textContent = "Hlasové zadávání tento prohlížeč nepodporuje.";
+}
+
+// ODESÍLÁNÍ ZPRÁV
 form.addEventListener("submit",async function(e){
  e.preventDefault();
 
@@ -367,6 +583,8 @@ form.addEventListener("submit",async function(e){
    conversation = conversation.slice(-24);
   }
 
+  speakAnswer(answer);
+
  }catch(error){
   typing.style.display = "none";
 
@@ -376,6 +594,7 @@ form.addEventListener("submit",async function(e){
   );
 
   console.error(error);
+
  }finally{
   busy = false;
   send.disabled = false;
@@ -384,5 +603,6 @@ form.addEventListener("submit",async function(e){
  }
 });
 </script>
+
 </body>
 </html>
