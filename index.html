@@ -260,7 +260,15 @@ function renderMarkdown(text){
 }
 
 // ZPRÁVY
-function addMessage(text,user=false){
+function renderMarkdown(text){
+ return String(text)
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+  .replace(/\*(.*?)\*/g,"<em>$1</em>")
+  .replace(/\n/g,"<br>");
+}
  const box = document.createElement("div");
  box.className = "message " + (user ? "user" : "bot");
 
