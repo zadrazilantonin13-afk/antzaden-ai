@@ -472,23 +472,6 @@ async function askAI(query){
 
   throw error;
 
- } finally {
-  clearTimeout(timeout);
- }
-}
-
-
- if(!response.ok){
-  throw new Error(data.error || "Chyba serveru: " + response.status);
- }
-
- if(!data.reply){
-  throw new Error("AI nevrátila odpověď.");
- }
-
- return data.reply;
-}
-
 // ANIMACE PSANÍ
 async function typeAnswer(element,text){
  const step = 4;
