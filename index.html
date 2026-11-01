@@ -373,6 +373,81 @@ input::placeholder {
         padding: 10px;
     }
 }
+
+
+/* ADMIN PANEL */
+body.admin-mode {
+    overflow: auto;
+    height: 100dvh;
+}
+
+body.admin-mode header,
+body.admin-mode .quick,
+body.admin-mode main {
+    display: none;
+}
+
+#admin-panel {
+    display: none;
+    width: 100%;
+    max-width: 850px;
+    margin: auto;
+    padding: 30px 20px;
+}
+
+body.admin-mode #admin-panel {
+    display: block;
+}
+
+.admin-card {
+    background: #111914;
+    border: 1px solid #304235;
+    border-radius: 18px;
+    padding: 24px;
+    margin: 15px 0;
+}
+
+.admin-card h2 {
+    color: #75f596;
+    margin-top: 0;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0;
+    border: 1px solid #304235;
+    border-radius: 10px;
+    background: #090d0b;
+    color: white;
+}
+
+.admin-button {
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: #55e879;
+    color: #061109;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.admin-error {
+    color: #ff7777;
+    font-size: 13px;
+}
+
+.admin-success {
+    color: #55e879;
+}
+
+.admin-muted {
+    color: #91a397;
+    font-size: 13px;
+}
+
+    
 </style>
 </head>
 
@@ -453,6 +528,12 @@ const input = document.getElementById("input");
 const form = document.getElementById("form");
 const send = document.getElementById("send");
 const typing = document.getElementById("typing");
+
+    let conversation = [];
+let busy = false;
+let voiceEnabled = false;
+let recognition = null;
+let listening = false;
     
 // ==========================================
 // SKUTEČNÁ KONTROLA PŘIPOJENÍ AI
@@ -1185,6 +1266,233 @@ form.addEventListener("submit", async function(event) {
 console.log("AntZadEn AI Assistant byl úspěšně načten.");
 
 </script>
+
+    
+<section id="admin-panel">
+
+    <div class="admin-card">
+        <div style="font-size:12px;color:#55e879;letter-spacing:2px">
+            ANTZADEN AI
+        </div>
+
+        <h1 style="margin-top:10px">⚙️ Administrace</h1>
+        <p class="admin-muted">Zabezpečený administrační panel</p>
+    </div>
+
+    <div class="admin-card" id="admin-login">
+        <h2>🔐 Přihlášení administrátora</h2>
+
+        <input
+            id="admin-password"
+            class="admin-input"
+            type="password"
+            placeholder="Administrační heslo"
+            autocomplete="current-password"
+        >
+
+        <button class="admin-button" id="admin-login-button">
+            Přihlásit se
+        </button>
+
+        <p id="admin-error" class="admin-error"></p>
+    </div>
+
+    <div id="admin-dashboard" style="display:none">
+
+        <div class="admin-card">
+            <h2>📊 Přehled systému</h2>
+
+            <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
+            <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
+            <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
+
+            <button class="admin-button" id="admin-refresh">
+                🔄 Obnovit stav
+            </button>
+        </div>
+
+        <div class="admin-card">
+            <h2>🛠️ Správa</h2>
+            <p class="admin-muted">
+                Přihlášení funguje. Další funkce budeme postupně doplňovat.
+            </p>
+            <p>Verze: AntZadEn AI Admin 1.0</p>
+        </div>
+
+        <div class="admin-card">
+            <button class="admin-button" id="admin-logout">
+                🚪 Odhlásit se
+            </button>
+        </div>
+
+    </div>
+
+    <p class="admin-muted" style="text-align:center">
+        AntZadEn AI • Admin system
+    </p>
+
+</section>
+
+<script>
+// ===================================
+// ANTZADEN AI ADMIN PANEL
+// ===================================
+
+const adminPanel = document.getElementById("admin-panel");
+const adminLogin = document.getElementById("admin-login");
+const adminDashboard = document.getElementById("admin-dashboard");
+const adminError = document.getElementById("admin-error");
+
+let adminToken = sessionStorage.getItem("antzaden_admin_token");
+
+function showAdmin() {
+    document.body.classList.add("admin-mode");
+    adminPanel.style.display = "block";
+    checkAdminSession();
+}
+
+function hideAdmin() {
+    document.body.classList.remove("admin-mode");
+    adminPanel.style.display = "none";
+}
+
+async function adminRequest(action, extra = {}) {
+    const response = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(adminToken ? {
+                "Authorization": "Bearer " + adminToken
+            } : {})
+        },
+        body: JSON.stringify({
+            action,
+            ...extra
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.error || "Chyba přihlášení.");
+    }
+
+    return data;
+}
+
+async function checkAdminSession() {
+    if (!adminToken) {
+        adminLogin.style.display = "block";
+        adminDashboard.style.display = "none";
+        return;
+    }
+
+    try {
+        await adminRequest("admin-check");
+
+        adminLogin.style.display = "none";
+        adminDashboard.style.display = "block";
+
+        await refreshAdminStatus();
+
+    } catch (error) {
+        adminToken = null;
+        sessionStorage.removeItem("antzaden_admin_token");
+
+        adminLogin.style.display = "block";
+        adminDashboard.style.display = "none";
+    }
+}
+
+document.getElementById("admin-login-button").onclick =
+async function() {
+    const password = document.getElementById("admin-password").value;
+
+    if (!password) {
+        adminError.textContent = "Zadej heslo.";
+        return;
+    }
+
+    this.disabled = true;
+    adminError.textContent = "Ověřuji přihlášení...";
+
+    try {
+        const data = await adminRequest("admin-login", {
+            password
+        });
+
+        adminToken = data.token;
+
+        sessionStorage.setItem(
+            "antzaden_admin_token",
+            adminToken
+        );
+
+        document.getElementById("admin-password").value = "";
+        adminError.textContent = "";
+
+        await checkAdminSession();
+
+    } catch (error) {
+        adminError.textContent = error.message;
+    } finally {
+        this.disabled = false;
+    }
+};
+
+async function refreshAdminStatus() {
+    const aiStatus = document.getElementById("admin-ai-status");
+    const searchStatus = document.getElementById("admin-search-status");
+
+    aiStatus.textContent = "Kontroluji...";
+    searchStatus.textContent = "Kontroluji...";
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        aiStatus.textContent = data.ai ? "🟢 Online" : "🔴 Offline";
+        searchStatus.textContent = data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
+
+    } catch (error) {
+        aiStatus.textContent = "🔴 Nedostupná";
+        searchStatus.textContent = "🔴 Nedostupné";
+    }
+}
+
+document.getElementById("admin-refresh").onclick =
+    refreshAdminStatus;
+
+document.getElementById("admin-logout").onclick = function() {
+    adminToken = null;
+
+    sessionStorage.removeItem("antzaden_admin_token");
+
+    adminDashboard.style.display = "none";
+    adminLogin.style.display = "block";
+
+    adminError.textContent = "Byl jsi odhlášen.";
+};
+
+// Otevření panelu přes #admin
+function handleAdminRoute() {
+    if (location.hash === "#admin") {
+        showAdmin();
+    } else {
+        hideAdmin();
+    }
+}
+
+window.addEventListener("hashchange", handleAdminRoute);
+handleAdminRoute();
+
+</script>
+</body>
+</html>
+
 
 </body>
 </html>
