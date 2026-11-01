@@ -387,7 +387,7 @@ input::placeholder {
         </div>
     </div>
 
-    <div class="status">● ONLINE</div>
+   <div class="status" id="connection-status">● KONTROLUJI...</div>
 </header>
 
 <div class="quick">
@@ -453,7 +453,38 @@ const input = document.getElementById("input");
 const form = document.getElementById("form");
 const send = document.getElementById("send");
 const typing = document.getElementById("typing");
+    
+// ==========================================
+// SKUTEČNÁ KONTROLA PŘIPOJENÍ
+// ==========================================
 
+async function checkConnection() {
+    const status = document.getElementById("connection-status");
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: "GET",
+            cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === "online" && data.ai) {
+            status.textContent = "● AI ONLINE";
+            status.style.color = "#55e879";
+        } else {
+            status.textContent = "● AI NEDOSTUPNÁ";
+            status.style.color = "#ff7777";
+        }
+
+    } catch (error) {
+        status.textContent = "● OFFLINE";
+        status.style.color = "#ff7777";
+    }
+}
+
+checkConnection();
+setInterval(checkConnection, 30000);
 let busy = false;
 let conversation = [];
 let voiceEnabled = false;
@@ -927,22 +958,25 @@ async function askAI(query) {
 
 async function typeAnswer(element, text) {
     const characters = Array.from(String(text));
-    const step = 4;
+    const step = 3;
 
     element.textContent = "";
 
     for (let i = 0; i < characters.length; i += step) {
-        element.textContent = characters.slice(0, i + step).join("");
+        element.textContent = characters
+            .slice(0, i + step)
+            .join("");
 
         scrollDown();
 
-        await new Promise(resolve => setTimeout(resolve, 12));
+        await new Promise(resolve =>
+            setTimeout(resolve, 10)
+        );
     }
 
     element.innerHTML = renderMarkdown(text);
     scrollDown();
 }
-
 // ==========================================
 // HLASOVÝ VÝSTUP
 // ==========================================
