@@ -1,40 +1,24 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d0b">
-<meta name="description" content="AntZadEn AI Assistant – tvůj osobní AI asistent.">
+<meta name="description" content="AntZadEn AI Assistant – bez registrace a přihlášení.">
 <title>AntZadEn AI Assistant</title>
 <style>
 *{box-sizing:border-box}
-:root{--bg:#090d0b;--panel:#101713;--panel2:#141e17;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
+:root{--bg:#090d0b;--panel:#101713;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
 body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;overflow:hidden}
-button,input{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-#auth-screen{height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:0 20px 70px #0008}
-.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:26px;font-weight:bold}
-.auth-brand{display:flex;align-items:center;gap:13px;margin-bottom:24px}
-.auth-brand h1{font-size:19px;margin:0}
-.sub{font-size:12px;color:var(--muted);margin-top:5px}
-.auth-card h2{font-size:21px;margin:10px 0}
-.auth-card p{font-size:13px;color:var(--muted);line-height:1.5}
-.auth-input{width:100%;padding:14px;margin:7px 0;background:#090d0b;border:1px solid #304235;border-radius:11px;color:white;outline:none}
-.auth-input:focus{border-color:var(--green)}
-.primary{width:100%;padding:13px;border:0;border-radius:11px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-weight:bold;margin-top:12px}
-.auth-switch{width:100%;background:transparent;border:0;color:#79f39a;padding:15px 5px 0}
-.auth-error{color:#ff7777;font-size:12px;min-height:18px;margin-top:10px}
-.auth-note{font-size:10px!important;text-align:center;margin-top:20px}
-#app{display:none;height:100dvh}
+button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+#app{height:100dvh;display:none}
 header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:12px}
-.brand .logo{width:42px;height:42px;font-size:23px}
-.brand h1{font-size:17px;margin:0}
+.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
+.brand h1{font-size:17px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:5px}
 .status{font-size:11px;color:var(--green)}
 .header-right{display:flex;align-items:center;gap:12px}
-.user-label{font-size:12px;color:var(--muted)}
 .small-button{background:#17231a;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 12px;font-size:12px}
 #layout{height:calc(100dvh - 72px);display:flex;min-height:0}
 #sidebar{width:255px;flex-shrink:0;background:#0c120e;border-right:1px solid #26372c;display:flex;flex-direction:column;padding:14px;min-height:0}
@@ -61,9 +45,7 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .markdown{overflow-wrap:anywhere}
 .markdown strong{color:#75f596}
 .markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3}
-.markdown h1{font-size:21px}
-.markdown h2{font-size:18px}
-.markdown h3{font-size:16px}
+.markdown h1{font-size:21px}.markdown h2{font-size:18px}.markdown h3{font-size:16px}
 .markdown a{color:#78f49a}
 .markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
 .markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
@@ -92,60 +74,18 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .admin-error{color:#ff7777;font-size:13px}
 .admin-success{color:var(--green)}
 @media(max-width:700px){
-header{height:64px;padding:9px 12px}
-.brand h1{font-size:14px}
-.brand .logo{width:38px;height:38px}
-.user-label{display:none}
-#layout{height:calc(100dvh - 64px)}
-#sidebar{width:190px;padding:9px}
-main{padding:10px 10px 0}
-.message{max-width:94%;font-size:13px}
+header{height:64px;padding:9px 12px}.brand h1{font-size:14px}.brand .logo{width:38px;height:38px}
+#layout{height:calc(100dvh - 64px)}#sidebar{width:190px;padding:9px}
+main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
 }
 @media(max-width:480px){
-#sidebar{width:145px;padding:7px}
-.chat-select{font-size:11px;padding:8px}
-.new-chat{font-size:11px;padding:10px}
-.sidebar-title{font-size:9px}
-.header-right{gap:5px}
-.small-button{padding:8px;font-size:10px}
+#sidebar{width:145px;padding:7px}.chat-select{font-size:11px;padding:8px}
+.new-chat{font-size:11px;padding:10px}.sidebar-title{font-size:9px}
+.header-right{gap:5px}.small-button{padding:8px;font-size:10px}
 }
 </style>
 </head>
 <body>
-
-<section id="auth-screen">
-<div class="auth-card">
-  <div class="auth-brand">
-    <div class="logo">A</div>
-    <div>
-      <h1>AntZadEn AI Assistant</h1>
-      <div class="sub">Tvůj osobní AI asistent</div>
-    </div>
-  </div>
-
-  <div id="login-box">
-    <h2>Vítej zpět 👋</h2>
-    <p>Přihlas se ke svému účtu a pokračuj ve svých konverzacích.</p>
-    <input class="auth-input" id="login-username" placeholder="Uživatelské jméno" autocomplete="username">
-    <input class="auth-input" id="login-password" type="password" placeholder="Heslo" autocomplete="current-password">
-    <button class="primary" id="login-button">Přihlásit se</button>
-    <button class="auth-switch" id="show-register">Nemáš účet? Zaregistruj se</button>
-  </div>
-
-  <div id="register-box" style="display:none">
-    <h2>Vytvořit účet ✨</h2>
-    <p>Registrace je zdarma. Tvoje chaty budou oddělené od ostatních uživatelů.</p>
-    <input class="auth-input" id="register-username" placeholder="Uživatelské jméno" autocomplete="username" maxlength="24">
-    <input class="auth-input" id="register-password" type="password" placeholder="Heslo (alespoň 8 znaků)" autocomplete="new-password">
-    <input class="auth-input" id="register-password2" type="password" placeholder="Zopakuj heslo" autocomplete="new-password">
-    <button class="primary" id="register-button">Vytvořit účet</button>
-    <button class="auth-switch" id="show-login">Už máš účet? Přihlas se</button>
-  </div>
-
-  <div class="auth-error" id="auth-error"></div>
-  <p class="auth-note">AntZadEn AI • Powered by Cloudflare Workers AI</p>
-</div>
-</section>
 
 <div id="app">
 <header>
@@ -157,9 +97,8 @@ main{padding:10px 10px 0}
     </div>
   </div>
   <div class="header-right">
-    <span class="user-label" id="user-label"></span>
-    <span class="status" id="connection-status">● KONTROLUJI...</span>
-    <button class="small-button" id="logout-button">Odhlásit</button>
+    <span class="status" id="connection-status">● PŘIPOJUJI...</span>
+    <button class="small-button" id="admin-open">⚙ Admin</button>
   </div>
 </header>
 
@@ -183,25 +122,19 @@ main{padding:10px 10px 0}
 
   <main>
     <section id="chat" aria-live="polite">
-      <div id="typing">
-        <span class="spinner"></span>
-        AntZadEn AI přemýšlí…
-      </div>
+      <div id="typing"><span class="spinner"></span>AntZadEn AI přemýšlí…</div>
     </section>
-
     <div class="bottom">
       <form id="form">
         <input id="input" type="text" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
         <button id="send" type="submit">➤</button>
       </form>
-
       <div class="voicebar">
         <button type="button" id="voice-mic">🎤 Mluvit</button>
         <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
         <span id="voice-status">Hlas připraven</span>
       </div>
-
-      <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI</div>
+      <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim</div>
     </div>
   </main>
 </div>
@@ -230,16 +163,15 @@ main{padding:10px 10px 0}
       <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
       <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
       <p>Databáze: <strong id="admin-db-status">Kontroluji...</strong></p>
+      <p>Anonymní režim: <strong class="admin-success">Aktivní</strong></p>
       <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
       <button class="admin-button" id="admin-refresh">🔄 Obnovit stav</button>
     </div>
-
     <div class="admin-card">
       <h2>🛠️ Systém</h2>
       <p class="admin-muted">AntZadEn AI Assistant – administrace systému.</p>
-      <p>Verze: AntZadEn AI 2.1</p>
+      <p>Verze: AntZadEn AI 3.0</p>
     </div>
-
     <div class="admin-card">
       <button class="admin-button" id="admin-logout">🚪 Odhlásit administrátora</button>
     </div>
@@ -253,18 +185,13 @@ main{padding:10px 10px 0}
 const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
 const $ = id => document.getElementById(id);
 
-let token = localStorage.getItem("antzaden_user_token") || "";
-let currentUser = null;
+let token = localStorage.getItem("antzaden_guest_token") || "";
 let currentChatId = null;
 let busy = false;
 let voiceEnabled = false;
 let recognition = null;
 let listening = false;
 let adminToken = sessionStorage.getItem("antzaden_admin_token") || "";
-
-// ==========================================
-// API
-// ==========================================
 
 async function api(action, extra = {}, useToken = true) {
   const headers = {"Content-Type":"application/json"};
@@ -274,9 +201,9 @@ async function api(action, extra = {}, useToken = true) {
   }
 
   const response = await fetch(WORKER_URL, {
-    method: "POST",
+    method:"POST",
     headers,
-    body: JSON.stringify({
+    body:JSON.stringify({
       action,
       ...(useToken && token ? {token} : {}),
       ...extra
@@ -300,127 +227,44 @@ async function api(action, extra = {}, useToken = true) {
 }
 
 // ==========================================
-// PŘIHLÁŠENÍ A REGISTRACE
+// ANONYMNÍ PŘÍSTUP
 // ==========================================
 
-function showAuthMode(mode) {
-  $("login-box").style.display = mode === "login" ? "block" : "none";
-  $("register-box").style.display = mode === "register" ? "block" : "none";
-  $("auth-error").textContent = "";
-}
-
-$("show-register").onclick = () => showAuthMode("register");
-$("show-login").onclick = () => showAuthMode("login");
-
-async function finishLogin(data) {
-  token = data.token;
-  currentUser = data.user;
-
-  localStorage.setItem("antzaden_user_token", token);
-
-  $("auth-screen").style.display = "none";
-  $("admin-screen").style.display = "none";
-  $("app").style.display = "block";
-  $("user-label").textContent = currentUser.username;
-
-  currentChatId = null;
-  await loadChats();
-}
-
-$("login-button").onclick = async () => {
-  const username = $("login-username").value.trim();
-  const password = $("login-password").value;
-
-  if (!username || !password) {
-    $("auth-error").textContent = "Vyplň uživatelské jméno a heslo.";
-    return;
-  }
-
-  $("login-button").disabled = true;
-  $("auth-error").textContent = "Přihlašuji...";
+async function initializeGuest() {
+  $("connection-status").textContent = "● PŘIPOJUJI...";
 
   try {
-    const data = await api("login", {username,password}, false);
-    await finishLogin(data);
-  } catch (error) {
-    $("auth-error").textContent = error.message;
-  } finally {
-    $("login-button").disabled = false;
-  }
-};
+    const data = await api("guest-init", {}, true);
 
-$("register-button").onclick = async () => {
-  const username = $("register-username").value.trim().toLowerCase();
-  const password = $("register-password").value;
-  const password2 = $("register-password2").value;
+    if (!data.token) {
+      throw new Error("Server nevydal anonymní token.");
+    }
 
-  if (password !== password2) {
-    $("auth-error").textContent = "Hesla se neshodují.";
-    return;
-  }
+    token = data.token;
+    localStorage.setItem("antzaden_guest_token", token);
 
-  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
-    $("auth-error").textContent = "Jméno musí mít 3–24 znaků: a-z, 0-9 nebo _.";
-    return;
-  }
-
-  if (password.length < 8) {
-    $("auth-error").textContent = "Heslo musí mít alespoň 8 znaků.";
-    return;
-  }
-
-  $("register-button").disabled = true;
-  $("auth-error").textContent = "Vytvářím účet...";
-
-  try {
-    const data = await api("register", {username,password}, false);
-    await finishLogin(data);
-  } catch (error) {
-    $("auth-error").textContent = error.message;
-  } finally {
-    $("register-button").disabled = false;
-  }
-};
-
-$("logout-button").onclick = () => {
-  token = "";
-  currentUser = null;
-  currentChatId = null;
-
-  localStorage.removeItem("antzaden_user_token");
-
-  $("app").style.display = "none";
-  $("auth-screen").style.display = "flex";
-  $("login-password").value = "";
-
-  showAuthMode("login");
-};
-
-async function restoreSession() {
-  if (!token) {
-    $("auth-screen").style.display = "flex";
-    return;
-  }
-
-  try {
-    const data = await api("me");
-    currentUser = data.user;
-
-    $("auth-screen").style.display = "none";
     $("app").style.display = "block";
-    $("user-label").textContent = currentUser.username;
 
     await loadChats();
-  } catch {
-    $("app").style.display = "none";
-    token = "";
-    localStorage.removeItem("antzaden_user_token");
-    $("auth-screen").style.display = "flex";
+    await checkConnection();
+
+  } catch (error) {
+    $("connection-status").textContent = "● CHYBA";
+    $("connection-status").style.color = "#ff7777";
+
+    $("chat-list").textContent = "Nepodařilo se připojit.";
+    clearChatView();
+    addMessage(
+      "Nepodařilo se spustit anonymní režim.\n\n" + error.message,
+      false
+    );
+
+    console.error(error);
   }
 }
 
 // ==========================================
-// ZPRÁVY A MARKDOWN
+// MARKDOWN
 // ==========================================
 
 function escapeHTML(text) {
@@ -440,12 +284,10 @@ function inlineMarkdown(text) {
     '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
   );
 
-  html = html
+  return html
     .replace(/`([^`]+)`/g,"<code>$1</code>")
     .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
     .replace(/\*(.+?)\*/g,"<em>$1</em>");
-
-  return html;
 }
 
 function renderMarkdown(text) {
@@ -482,7 +324,6 @@ function renderMarkdown(text) {
       } else {
         code = true;
       }
-
       continue;
     }
 
@@ -496,7 +337,6 @@ function renderMarkdown(text) {
     if (match) {
       flush();
       closeList();
-
       const n = match[1].length;
       html += `<h${n}>${inlineMarkdown(match[2])}</h${n}>`;
       continue;
@@ -507,7 +347,6 @@ function renderMarkdown(text) {
 
     if (match || numbered) {
       flush();
-
       const type = match ? "ul" : "ol";
 
       if (list !== type) {
@@ -555,7 +394,6 @@ function clearChatView() {
   const indicator = document.createElement("div");
   indicator.id = "typing";
   indicator.innerHTML = '<span class="spinner"></span>AntZadEn AI přemýšlí…';
-
   $("chat").appendChild(indicator);
 }
 
@@ -580,7 +418,6 @@ function addMessage(text, isUser) {
   }
 
   box.appendChild(content);
-
   $("chat").insertBefore(box, $("typing"));
   scrollDown();
 
@@ -606,7 +443,7 @@ async function typeAnswer(element, text) {
 }
 
 // ==========================================
-// HISTORIE CHATŮ
+// CHATY
 // ==========================================
 
 function makeChatRow(item) {
@@ -630,9 +467,7 @@ function makeChatRow(item) {
     try {
       await api("chat-delete", {chatId:item.id});
 
-      if (currentChatId === item.id) {
-        currentChatId = null;
-      }
+      if (currentChatId === item.id) currentChatId = null;
 
       await loadChats();
     } catch (error) {
@@ -668,7 +503,6 @@ async function loadChats() {
 
   try {
     const data = await api("chats-list");
-
     list.innerHTML = "";
 
     (data.chats || []).forEach(item => {
@@ -676,10 +510,7 @@ async function loadChats() {
     });
 
     if (data.chats?.length) {
-      if (
-        !currentChatId ||
-        !data.chats.some(item => item.id === currentChatId)
-      ) {
+      if (!currentChatId || !data.chats.some(item => item.id === currentChatId)) {
         await openChat(data.chats[0].id);
       }
     } else {
@@ -695,12 +526,11 @@ async function loadChats() {
 async function createChat() {
   try {
     const data = await api("chat-create");
-
     currentChatId = data.chat.id;
 
     clearChatView();
     addMessage(
-      "Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!",
+      "Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Nemusíš se registrovat ani přihlašovat. Zeptej se mě na cokoliv!",
       false
     );
 
@@ -717,7 +547,6 @@ async function openChat(chatId) {
 
   try {
     const data = await api("chat-get", {chatId});
-
     clearChatView();
 
     if (!data.messages?.length) {
@@ -742,32 +571,18 @@ $("new-chat").onclick = createChat;
 $("refresh-chats").onclick = loadChats;
 
 // ==========================================
-// POČASÍ
+// LOKÁLNÍ ODPOVĚDI A POČASÍ
 // ==========================================
 
 function weatherDescription(code) {
   return ({
-    0:"jasno",
-    1:"převážně jasno",
-    2:"polojasno",
-    3:"zataženo",
-    45:"mlha",
-    48:"mrznoucí mlha",
-    51:"slabé mrholení",
-    53:"mrholení",
-    55:"silné mrholení",
-    61:"slabý déšť",
-    63:"déšť",
-    65:"silný déšť",
-    71:"slabé sněžení",
-    73:"sněžení",
-    75:"silné sněžení",
-    80:"přeháňky",
-    81:"silnější přeháňky",
-    82:"prudké přeháňky",
-    95:"bouřky",
-    96:"bouřky s kroupami",
-    99:"silné bouřky"
+    0:"jasno",1:"převážně jasno",2:"polojasno",3:"zataženo",
+    45:"mlha",48:"mrznoucí mlha",51:"slabé mrholení",
+    53:"mrholení",55:"silné mrholení",61:"slabý déšť",
+    63:"déšť",65:"silný déšť",71:"slabé sněžení",
+    73:"sněžení",75:"silné sněžení",80:"přeháňky",
+    81:"silnější přeháňky",82:"prudké přeháňky",
+    95:"bouřky",96:"bouřky s kroupami",99:"silné bouřky"
   })[code] || "proměnlivé počasí";
 }
 
@@ -805,10 +620,7 @@ async function getDeviceLocation() {
   } catch (error) {}
 
   const city = prompt("Poloha není dostupná. Zadej město:");
-
-  if (!city) {
-    throw new Error("Nebyla zadána poloha.");
-  }
+  if (!city) throw new Error("Nebyla zadána poloha.");
 
   const response = await fetch(
     "https://geocoding-api.open-meteo.com/v1/search?name=" +
@@ -818,9 +630,7 @@ async function getDeviceLocation() {
 
   const data = await response.json();
 
-  if (!data.results?.length) {
-    throw new Error("Město nebylo nalezeno.");
-  }
+  if (!data.results?.length) throw new Error("Město nebylo nalezeno.");
 
   return {
     latitude:data.results[0].latitude,
@@ -832,7 +642,6 @@ async function getDeviceLocation() {
 async function getWeather(query) {
   const location = await getDeviceLocation();
   const date = new Date();
-
   date.setHours(0,0,0,0);
 
   if (query.toLowerCase().includes("pozítří")) {
@@ -866,16 +675,12 @@ async function getWeather(query) {
     "https://api.open-meteo.com/v1/forecast?" + params
   );
 
-  if (!response.ok) {
-    throw new Error("Počasí se nepodařilo načíst.");
-  }
+  if (!response.ok) throw new Error("Počasí se nepodařilo načíst.");
 
   const data = await response.json();
   const index = data.daily.time.indexOf(iso);
 
-  if (index < 0) {
-    return "Předpověď není dostupná.";
-  }
+  if (index < 0) return "Předpověď není dostupná.";
 
   return `## 🌤️ Počasí
 
@@ -893,19 +698,13 @@ async function getLocalAnswer(query) {
   const q = query.toLowerCase();
 
   if (q.includes("kolik je hodin")) {
-    return "Právě je **" +
-      new Date().toLocaleTimeString("cs-CZ", {
-        hour:"2-digit",
-        minute:"2-digit"
-      }) +
-      "** podle času tvého zařízení.";
+    return "Právě je **" + new Date().toLocaleTimeString("cs-CZ", {
+      hour:"2-digit",
+      minute:"2-digit"
+    }) + "** podle času tvého zařízení.";
   }
 
-  if (
-    q.includes("počasí") ||
-    q.includes("předpověď") ||
-    q.includes("teplota")
-  ) {
+  if (q.includes("počasí") || q.includes("předpověď") || q.includes("teplota")) {
     return await getWeather(query);
   }
 
@@ -913,7 +712,7 @@ async function getLocalAnswer(query) {
 }
 
 // ==========================================
-// ODESÍLÁNÍ ZPRÁV
+// ODESÍLÁNÍ
 // ==========================================
 
 async function sendMessage(query) {
@@ -937,45 +736,32 @@ async function sendMessage(query) {
 
     if (answer !== null) {
       await api("chat-save-message", {
-        chatId:currentChatId,
-        role:"user",
-        content:query
+        chatId:currentChatId,role:"user",content:query
       });
 
       await api("chat-save-message", {
-        chatId:currentChatId,
-        role:"assistant",
-        content:answer
+        chatId:currentChatId,role:"assistant",content:answer
       });
     } else {
       const data = await api("chat-send", {
-        chatId:currentChatId,
-        message:query
+        chatId:currentChatId,message:query
       });
 
       answer = data.reply;
     }
 
-    if (!answer) {
-      throw new Error("Server nevrátil text odpovědi.");
-    }
+    if (!answer) throw new Error("Server nevrátil text odpovědi.");
 
     $("typing").style.display = "none";
-
     const target = addMessage("", false);
-    await typeAnswer(target, answer);
 
+    await typeAnswer(target, answer);
     speakAnswer(answer);
     await loadChatsListOnly();
 
   } catch (error) {
     $("typing").style.display = "none";
-
-    addMessage(
-      "Nepodařilo se získat odpověď.\n\n" + error.message,
-      false
-    );
-
+    addMessage("Nepodařilo se získat odpověď.\n\n" + error.message, false);
     console.error(error);
 
   } finally {
@@ -989,7 +775,6 @@ async function sendMessage(query) {
 
 $("form").addEventListener("submit", event => {
   event.preventDefault();
-
   const value = $("input").value.trim();
 
   if (value) {
@@ -1020,7 +805,6 @@ function speakAnswer(text) {
     .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
 
   const utterance = new SpeechSynthesisUtterance(clean);
-
   utterance.lang = "cs-CZ";
   utterance.rate = 1;
 
@@ -1039,9 +823,7 @@ $("voice-toggle").onclick = () => {
   }
 };
 
-const Recognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (Recognition) {
   recognition = new Recognition();
@@ -1056,7 +838,7 @@ if (Recognition) {
       recognition.start();
       listening = true;
       $("voice-status").textContent = "🎤 Poslouchám...";
-    } catch (error) {
+    } catch {
       $("voice-status").textContent = "Mikrofon se nepodařilo spustit.";
     }
   };
@@ -1073,20 +855,17 @@ if (Recognition) {
 
   recognition.onend = () => {
     listening = false;
-
     if ($("voice-status").textContent === "🎤 Poslouchám...") {
       $("voice-status").textContent = "Hlas připraven";
     }
   };
-
 } else {
   $("voice-mic").disabled = true;
-  $("voice-status").textContent =
-    "Hlasové zadávání tento prohlížeč nepodporuje.";
+  $("voice-status").textContent = "Hlasové zadávání tento prohlížeč nepodporuje.";
 }
 
 // ==========================================
-// KONTROLA WORKERU
+// KONTROLA SERVERU
 // ==========================================
 
 async function checkConnection() {
@@ -1094,26 +873,18 @@ async function checkConnection() {
     const response = await fetch(WORKER_URL, {cache:"no-store"});
     const data = await response.json();
 
-    $("connection-status").textContent =
-      data.status === "online" && data.ai && data.database
-        ? "● AI ONLINE"
-        : data.status === "online"
-          ? "● ČÁSTEČNĚ ONLINE"
-          : "● CHYBA";
+    const online = data.status === "online" && data.ai && data.database;
 
-    $("connection-status").style.color =
-      data.status === "online" && data.ai && data.database
-        ? "#55e879"
-        : "#ff7777";
+    $("connection-status").textContent = online
+      ? "● AI ONLINE"
+      : "● ČÁSTEČNĚ ONLINE";
 
+    $("connection-status").style.color = online ? "#55e879" : "#ff7777";
   } catch {
     $("connection-status").textContent = "● OFFLINE";
     $("connection-status").style.color = "#ff7777";
   }
 }
-
-checkConnection();
-setInterval(checkConnection, 30000);
 
 // ==========================================
 // ADMINISTRACE
@@ -1143,20 +914,13 @@ async function adminRequest(action, extra = {}) {
 
 function showAdmin() {
   $("app").style.display = "none";
-  $("auth-screen").style.display = "none";
   $("admin-screen").style.display = "block";
-
   checkAdminSession();
 }
 
 function hideAdmin() {
   $("admin-screen").style.display = "none";
-
-  if (token) {
-    $("app").style.display = "block";
-  } else {
-    $("auth-screen").style.display = "flex";
-  }
+  $("app").style.display = "block";
 }
 
 async function checkAdminSession() {
@@ -1168,16 +932,12 @@ async function checkAdminSession() {
 
   try {
     await adminRequest("admin-check");
-
     $("admin-login").style.display = "none";
     $("admin-dashboard").style.display = "block";
-
     await refreshAdminStatus();
-
   } catch {
     adminToken = "";
     sessionStorage.removeItem("antzaden_admin_token");
-
     $("admin-login").style.display = "block";
     $("admin-dashboard").style.display = "none";
   }
@@ -1192,14 +952,11 @@ $("admin-login-button").onclick = async () => {
     });
 
     adminToken = data.token;
-
     sessionStorage.setItem("antzaden_admin_token", adminToken);
-
     $("admin-password").value = "";
     $("admin-error").textContent = "";
 
     await checkAdminSession();
-
   } catch (error) {
     $("admin-error").textContent = error.message;
   }
@@ -1210,15 +967,9 @@ async function refreshAdminStatus() {
     const response = await fetch(WORKER_URL, {cache:"no-store"});
     const data = await response.json();
 
-    $("admin-ai-status").textContent =
-      data.ai ? "🟢 Online" : "🔴 Offline";
-
-    $("admin-search-status").textContent =
-      data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
-
-    $("admin-db-status").textContent =
-      data.database ? "🟢 Připojena" : "🔴 Nepřipojena";
-
+    $("admin-ai-status").textContent = data.ai ? "🟢 Online" : "🔴 Offline";
+    $("admin-search-status").textContent = data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
+    $("admin-db-status").textContent = data.database ? "🟢 Připojena" : "🔴 Nepřipojena";
   } catch {
     $("admin-ai-status").textContent = "🔴 Nedostupná";
     $("admin-search-status").textContent = "🔴 Nedostupné";
@@ -1231,10 +982,13 @@ $("admin-refresh").onclick = refreshAdminStatus;
 $("admin-logout").onclick = () => {
   adminToken = "";
   sessionStorage.removeItem("antzaden_admin_token");
-
   $("admin-dashboard").style.display = "none";
   $("admin-login").style.display = "block";
   $("admin-error").textContent = "Byl jsi odhlášen.";
+};
+
+$("admin-open").onclick = () => {
+  location.hash = "admin";
 };
 
 $("admin-back").onclick = () => {
@@ -1256,9 +1010,10 @@ window.addEventListener("hashchange", handleRoute);
 // START
 // ==========================================
 
-console.log("AntZadEn AI Assistant načten.");
+console.log("AntZadEn AI Assistant – Guest Mode.");
 
-restoreSession();
+initializeGuest();
+setInterval(checkConnection, 30000);
 handleRoute();
 </script>
 </body>
