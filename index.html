@@ -7,16 +7,20 @@
 <meta name="theme-color" content="#090d0b">
 <meta name="description" content="AntZadEn AI Assistant – bez registrace a přihlášení.">
 <title>AntZadEn AI Assistant</title>
+
 <style>
 *{box-sizing:border-box}
 :root{--bg:#090d0b;--panel:#101713;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
 body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;overflow:hidden}
-button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
 #app{height:100dvh;display:none}
 header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
-.brand h1{font-size:17px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:5px}
+.brand h1{font-size:17px;margin:0}
+.sub{font-size:12px;color:var(--muted);margin-top:5px}
 .status{font-size:11px;color:var(--green)}
 .header-right{display:flex;align-items:center;gap:12px}
 .small-button{background:#17231a;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 12px;font-size:12px}
@@ -25,10 +29,11 @@ header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px s
 .new-chat{background:#183d24;border:1px solid #3d8a50;color:#a9f5b9;border-radius:11px;padding:12px;text-align:left;font-weight:bold}
 .sidebar-title{font-size:10px;color:#748579;letter-spacing:1.5px;margin:22px 5px 10px}
 #chat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}
-.chat-item{display:flex;align-items:center;gap:5px}
+.chat-item{display:flex;align-items:center;gap:3px;min-width:0}
 .chat-select{flex:1;min-width:0;text-align:left;background:transparent;border:1px solid transparent;color:#bdcbbf;border-radius:9px;padding:10px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-select:hover,.chat-select.active{background:#18241b;border-color:#304b35;color:#fff}
-.chat-delete{background:transparent;border:0;color:#78887c;padding:8px}
+.chat-rename,.chat-delete{background:transparent;border:0;color:#78887c;padding:7px;font-size:15px;flex-shrink:0}
+.chat-rename:hover{color:var(--green)}
 .chat-delete:hover{color:#ff7777}
 .sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid #26372c}
 #main-area{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -45,7 +50,9 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .markdown{overflow-wrap:anywhere}
 .markdown strong{color:#75f596}
 .markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3}
-.markdown h1{font-size:21px}.markdown h2{font-size:18px}.markdown h3{font-size:16px}
+.markdown h1{font-size:21px}
+.markdown h2{font-size:18px}
+.markdown h3{font-size:16px}
 .markdown a{color:#78f49a}
 .markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
 .markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
@@ -73,18 +80,28 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .admin-muted{color:var(--muted);font-size:13px}
 .admin-error{color:#ff7777;font-size:13px}
 .admin-success{color:var(--green)}
+
 @media(max-width:700px){
-header{height:64px;padding:9px 12px}.brand h1{font-size:14px}.brand .logo{width:38px;height:38px}
-#layout{height:calc(100dvh - 64px)}#sidebar{width:190px;padding:9px}
-main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
+header{height:64px;padding:9px 12px}
+.brand h1{font-size:14px}
+.brand .logo{width:38px;height:38px}
+#layout{height:calc(100dvh - 64px)}
+#sidebar{width:190px;padding:9px}
+main{padding:10px 10px 0}
+.message{max-width:94%;font-size:13px}
 }
 @media(max-width:480px){
-#sidebar{width:145px;padding:7px}.chat-select{font-size:11px;padding:8px}
-.new-chat{font-size:11px;padding:10px}.sidebar-title{font-size:9px}
-.header-right{gap:5px}.small-button{padding:8px;font-size:10px}
+#sidebar{width:145px;padding:7px}
+.chat-select{font-size:11px;padding:8px}
+.chat-rename,.chat-delete{padding:5px;font-size:13px}
+.new-chat{font-size:11px;padding:10px}
+.sidebar-title{font-size:9px}
+.header-right{gap:5px}
+.small-button{padding:8px;font-size:10px}
 }
 </style>
 </head>
+
 <body>
 
 <div id="app">
@@ -124,16 +141,19 @@ main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
     <section id="chat" aria-live="polite">
       <div id="typing"><span class="spinner"></span>AntZadEn AI přemýšlí…</div>
     </section>
+
     <div class="bottom">
       <form id="form">
         <input id="input" type="text" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
         <button id="send" type="submit">➤</button>
       </form>
+
       <div class="voicebar">
         <button type="button" id="voice-mic">🎤 Mluvit</button>
         <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
         <span id="voice-status">Hlas připraven</span>
       </div>
+
       <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim</div>
     </div>
   </main>
@@ -167,11 +187,13 @@ main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
       <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
       <button class="admin-button" id="admin-refresh">🔄 Obnovit stav</button>
     </div>
+
     <div class="admin-card">
       <h2>🛠️ Systém</h2>
       <p class="admin-muted">AntZadEn AI Assistant – administrace systému.</p>
       <p>Verze: AntZadEn AI 3.0</p>
     </div>
+
     <div class="admin-card">
       <button class="admin-button" id="admin-logout">🚪 Odhlásit administrátora</button>
     </div>
@@ -192,6 +214,10 @@ let voiceEnabled = false;
 let recognition = null;
 let listening = false;
 let adminToken = sessionStorage.getItem("antzaden_admin_token") || "";
+
+// ==========================================
+// API
+// ==========================================
 
 async function api(action, extra = {}, useToken = true) {
   const headers = {"Content-Type":"application/json"};
@@ -252,6 +278,7 @@ async function initializeGuest() {
     $("connection-status").textContent = "● CHYBA";
     $("connection-status").style.color = "#ff7777";
 
+    $("app").style.display = "block";
     $("chat-list").textContent = "Nepodařilo se připojit.";
     clearChatView();
     addMessage(
@@ -456,6 +483,40 @@ function makeChatRow(item) {
   button.title = item.title || "Nový chat";
   button.onclick = () => openChat(item.id);
 
+  // PŘEJMENOVÁNÍ CHATU
+  const rename = document.createElement("button");
+  rename.className = "chat-rename";
+  rename.textContent = "✎";
+  rename.title = "Přejmenovat chat";
+
+  rename.onclick = async () => {
+    const newTitle = prompt(
+      "Zadej nový název chatu:",
+      item.title || "Nový chat"
+    );
+
+    if (newTitle === null) return;
+
+    const title = newTitle.trim();
+
+    if (!title) {
+      alert("Název chatu nesmí být prázdný.");
+      return;
+    }
+
+    try {
+      await api("chat-rename", {
+        chatId:item.id,
+        title:title.slice(0,100)
+      });
+
+      await loadChatsListOnly();
+    } catch (error) {
+      alert("Chat se nepodařilo přejmenovat: " + error.message);
+    }
+  };
+
+  // SMAZÁNÍ CHATU
   const del = document.createElement("button");
   del.className = "chat-delete";
   del.textContent = "×";
@@ -467,7 +528,9 @@ function makeChatRow(item) {
     try {
       await api("chat-delete", {chatId:item.id});
 
-      if (currentChatId === item.id) currentChatId = null;
+      if (currentChatId === item.id) {
+        currentChatId = null;
+      }
 
       await loadChats();
     } catch (error) {
@@ -475,7 +538,7 @@ function makeChatRow(item) {
     }
   };
 
-  row.append(button, del);
+  row.append(button, rename, del);
   return row;
 }
 
@@ -712,7 +775,7 @@ async function getLocalAnswer(query) {
 }
 
 // ==========================================
-// ODESÍLÁNÍ
+// ODESÍLÁNÍ ZPRÁV
 // ==========================================
 
 async function sendMessage(query) {
@@ -736,15 +799,20 @@ async function sendMessage(query) {
 
     if (answer !== null) {
       await api("chat-save-message", {
-        chatId:currentChatId,role:"user",content:query
+        chatId:currentChatId,
+        role:"user",
+        content:query
       });
 
       await api("chat-save-message", {
-        chatId:currentChatId,role:"assistant",content:answer
+        chatId:currentChatId,
+        role:"assistant",
+        content:answer
       });
     } else {
       const data = await api("chat-send", {
-        chatId:currentChatId,message:query
+        chatId:currentChatId,
+        message:query
       });
 
       answer = data.reply;
@@ -791,7 +859,7 @@ document.querySelectorAll(".quick button").forEach(button => {
 });
 
 // ==========================================
-// HLAS
+// HLASOVÉ OVLÁDÁNÍ
 // ==========================================
 
 function speakAnswer(text) {
@@ -1015,6 +1083,7 @@ console.log("AntZadEn AI Assistant – Guest Mode.");
 initializeGuest();
 setInterval(checkConnection, 30000);
 handleRoute();
+
 </script>
 </body>
 </html>
