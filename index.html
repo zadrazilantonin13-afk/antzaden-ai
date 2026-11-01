@@ -5,1592 +5,1124 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d0b">
-<meta name="description" content="AntZadEn AI Assistant – osobní AI asistent.">
+<meta name="description" content="AntZadEn AI Assistant – tvůj osobní AI asistent.">
 <title>AntZadEn AI Assistant</title>
 
 <style>
-* {
-    box-sizing: border-box;
+*{box-sizing:border-box}
+:root{--bg:#090d0b;--panel:#101713;--panel2:#141e17;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
+body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;overflow:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+/* PŘIHLÁŠENÍ */
+#auth-screen{height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:0 20px 70px #0008}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:26px;font-weight:bold}
+.auth-brand{display:flex;align-items:center;gap:13px;margin-bottom:24px}
+.auth-brand h1{font-size:19px;margin:0}
+.sub{font-size:12px;color:var(--muted);margin-top:5px}
+.auth-card h2{font-size:21px;margin:10px 0}
+.auth-card p{font-size:13px;color:var(--muted);line-height:1.5}
+.auth-input{width:100%;padding:14px;margin:7px 0;background:#090d0b;border:1px solid #304235;border-radius:11px;color:white;outline:none}
+.auth-input:focus{border-color:var(--green)}
+.primary{width:100%;padding:13px;border:0;border-radius:11px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-weight:bold;margin-top:12px}
+.auth-switch{width:100%;background:transparent;border:0;color:#79f39a;padding:15px 5px 0}
+.auth-error{color:#ff7777;font-size:12px;min-height:18px;margin-top:10px}
+.auth-note{font-size:10px!important;text-align:center;margin-top:20px}
+
+/* HLAVNÍ APLIKACE */
+#app{display:none;height:100dvh}
+header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .logo{width:42px;height:42px;font-size:23px}
+.brand h1{font-size:17px;margin:0}
+.status{font-size:11px;color:var(--green)}
+.header-right{display:flex;align-items:center;gap:12px}
+.user-label{font-size:12px;color:var(--muted)}
+.small-button{background:#17231a;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 12px;font-size:12px}
+#layout{height:calc(100dvh - 72px);display:flex;min-height:0}
+#sidebar{width:255px;flex-shrink:0;background:#0c120e;border-right:1px solid #26372c;display:flex;flex-direction:column;padding:14px;min-height:0}
+.new-chat{background:#183d24;border:1px solid #3d8a50;color:#a9f5b9;border-radius:11px;padding:12px;text-align:left;font-weight:bold}
+.sidebar-title{font-size:10px;color:#748579;letter-spacing:1.5px;margin:22px 5px 10px}
+#chat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.chat-item{display:flex;align-items:center;gap:5px}
+.chat-select{flex:1;min-width:0;text-align:left;background:transparent;border:1px solid transparent;color:#bdcbbf;border-radius:9px;padding:10px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-select:hover,.chat-select.active{background:#18241b;border-color:#304b35;color:#fff}
+.chat-delete{background:transparent;border:0;color:#78887c;padding:8px}
+.chat-delete:hover{color:#ff7777}
+.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid #26372c}
+#main-area{flex:1;min-width:0;display:flex;flex-direction:column}
+.quick{display:flex;gap:8px;padding:11px 15px;background:#0c120e;overflow-x:auto;flex-shrink:0}
+.quick button{white-space:nowrap;background:#151e18;color:#c6d5ca;border:1px solid #304235;border-radius:22px;padding:9px 14px;font-size:12px}
+.quick button:hover{border-color:var(--green);color:white}
+main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:15px 16px 0}
+#chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;padding:5px 3px 20px;scroll-behavior:smooth}
+.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.6;font-size:14px;overflow-wrap:anywhere;animation:appear .2s ease}
+@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.bot{align-self:flex-start;background:#141e17;border:1px solid #2a3b2e;border-bottom-left-radius:5px}
+.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px;white-space:pre-wrap}
+.botname{font-size:10px;color:var(--green);font-weight:bold;letter-spacing:1px;margin-bottom:7px}
+.markdown{overflow-wrap:anywhere}
+.markdown strong{color:#75f596}
+.markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3}
+.markdown h1{font-size:21px}.markdown h2{font-size:18px}.markdown h3{font-size:16px}
+.markdown a{color:#78f49a}
+.markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
+.markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
+.markdown pre code{background:none;padding:0}
+.markdown blockquote{border-left:3px solid var(--green);margin:9px 0;padding:4px 12px;color:#b7c9bc}
+.markdown li{margin:5px 0}
+#typing{display:none;align-self:flex-start;align-items:center;gap:10px;padding:12px 15px;background:#111a14;border:1px solid #2a3b2e;border-radius:16px;color:var(--muted);font-size:12px}
+.spinner{width:15px;height:15px;border:2px solid #34513b;border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bottom{padding:13px 0 18px;border-top:1px solid #1b2a20;flex-shrink:0}
+#form{display:flex;gap:10px;align-items:center;background:#111914;border:1px solid #304235;border-radius:17px;padding:8px 9px 8px 16px}
+#input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
+#input::placeholder{color:#718077}
+#send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px}
+.voicebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
+.voicebar button{background:#14251a;border:1px solid #35543c;color:#a6f5b8;border-radius:10px;padding:9px 13px}
+#voice-status{font-size:11px;color:var(--muted)}
+.hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
+
+/* ADMINISTRACE */
+#admin-screen{display:none;min-height:100dvh;overflow:auto;padding:25px}
+.admin-wrap{max-width:750px;margin:20px auto}
+.admin-card{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:22px;margin:14px 0}
+.admin-card h2{color:#75f596;margin-top:0}
+.admin-input{width:100%;padding:13px;margin:10px 0;background:#090d0b;border:1px solid #304235;border-radius:10px;color:white}
+.admin-button{padding:12px 17px;border:0;border-radius:10px;background:var(--green);color:#061109;font-weight:bold;margin:5px}
+.admin-muted{color:var(--muted);font-size:13px}
+.admin-error{color:#ff7777;font-size:13px}
+.admin-success{color:var(--green)}
+
+@media(max-width:700px){
+  header{height:64px;padding:9px 12px}
+  .brand h1{font-size:14px}
+  .brand .logo{width:38px;height:38px}
+  .user-label{display:none}
+  #layout{height:calc(100dvh - 64px)}
+  #sidebar{width:190px;padding:9px}
+  main{padding:10px 10px 0}
+  .message{max-width:94%;font-size:13px}
 }
-
-body {
-    margin: 0;
-    height: 100dvh;
-    background: #090d0b;
-    color: #edf5ef;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+@media(max-width:480px){
+  #sidebar{width:145px;padding:7px}
+  .chat-select{font-size:11px;padding:8px}
+  .new-chat{font-size:11px;padding:10px}
+  .sidebar-title{font-size:9px}
+  .header-right{gap:5px}
+  .small-button{padding:8px;font-size:10px}
 }
-
-header {
-    padding: 17px 22px;
-    background: #101713;
-    border-bottom: 1px solid #26372c;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    background: linear-gradient(135deg, #70f28e, #159b45);
-    display: grid;
-    place-items: center;
-    color: #061109;
-    font-size: 23px;
-    font-weight: bold;
-}
-
-h1 {
-    font-size: 18px;
-    margin: 0;
-}
-
-.sub {
-    font-size: 11px;
-    color: #91a397;
-    margin-top: 4px;
-}
-
-.status {
-    color: #55e879;
-    font-size: 12px;
-}
-
-.quick {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    background: #0c120e;
-    overflow-x: auto;
-    flex-shrink: 0;
-}
-
-.quick button {
-    white-space: nowrap;
-    background: #151e18;
-    color: #c6d5ca;
-    border: 1px solid #304235;
-    border-radius: 22px;
-    padding: 9px 14px;
-    cursor: pointer;
-    transition: .2s;
-}
-
-.quick button:hover {
-    border-color: #55e879;
-    color: white;
-}
-
-main {
-    width: 100%;
-    max-width: 950px;
-    margin: auto;
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 18px 16px 0;
-}
-
-#chat {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 13px;
-    padding: 5px 3px 20px;
-    scroll-behavior: smooth;
-}
-
-.message {
-    max-width: 85%;
-    padding: 13px 16px;
-    border-radius: 17px;
-    line-height: 1.6;
-    font-size: 14px;
-    overflow-wrap: anywhere;
-    animation: appear .2s ease;
-}
-
-@keyframes appear {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.bot {
-    align-self: flex-start;
-    background: #141e17;
-    border: 1px solid #2a3b2e;
-    border-bottom-left-radius: 5px;
-}
-
-.user {
-    align-self: flex-end;
-    background: #176b35;
-    border: 1px solid #2c9b4b;
-    border-bottom-right-radius: 5px;
-    white-space: pre-wrap;
-}
-
-.botname {
-    font-size: 10px;
-    color: #55e879;
-    font-weight: bold;
-    letter-spacing: 1px;
-    margin-bottom: 7px;
-}
-
-.markdown {
-    overflow-wrap: anywhere;
-}
-
-.markdown strong {
-    color: #75f596;
-    font-weight: 800;
-}
-
-.markdown em {
-    color: #c6d5ca;
-}
-
-.markdown h1,
-.markdown h2,
-.markdown h3 {
-    color: #85f5a0;
-    line-height: 1.3;
-    margin: 13px 0 7px;
-}
-
-.markdown h1 {
-    font-size: 21px;
-}
-
-.markdown h2 {
-    font-size: 18px;
-}
-
-.markdown h3 {
-    font-size: 16px;
-}
-
-.markdown p {
-    margin: 7px 0;
-}
-
-.markdown ul,
-.markdown ol {
-    padding-left: 23px;
-    margin: 8px 0;
-}
-
-.markdown li {
-    margin: 5px 0;
-}
-
-.markdown a {
-    color: #78f49a;
-    text-decoration: underline;
-}
-
-.markdown code {
-    background: #202d23;
-    padding: 3px 6px;
-    border-radius: 5px;
-    color: #8affae;
-    font-family: Consolas, monospace;
-}
-
-.markdown pre {
-    background: #080e0a;
-    border: 1px solid #2a3b2e;
-    padding: 13px;
-    border-radius: 10px;
-    overflow-x: auto;
-    white-space: pre;
-}
-
-.markdown pre code {
-    background: none;
-    padding: 0;
-    color: #b8f5c6;
-}
-
-.markdown blockquote {
-    border-left: 3px solid #55e879;
-    margin: 9px 0;
-    padding: 4px 12px;
-    color: #b7c9bc;
-}
-
-#typing {
-    display: none;
-    align-self: flex-start;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 15px;
-    background: #111a14;
-    border: 1px solid #2a3b2e;
-    border-radius: 16px;
-    color: #91a397;
-    font-size: 12px;
-}
-
-.spinner {
-    width: 15px;
-    height: 15px;
-    border: 2px solid #34513b;
-    border-top-color: #55e879;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    flex-shrink: 0;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.bottom {
-    padding: 13px 0 18px;
-    border-top: 1px solid #1b2a20;
-    flex-shrink: 0;
-}
-
-form {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    background: #111914;
-    border: 1px solid #304235;
-    border-radius: 17px;
-    padding: 8px 9px 8px 16px;
-}
-
-input {
-    flex: 1;
-    min-width: 0;
-    background: transparent;
-    border: 0;
-    outline: 0;
-    color: white;
-    font-size: 15px;
-    padding: 10px;
-}
-
-input::placeholder {
-    color: #718077;
-}
-
-#send {
-    width: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: 13px;
-    background: linear-gradient(135deg, #65ef88, #24b653);
-    color: #061109;
-    font-size: 21px;
-    cursor: pointer;
-    transition: .2s;
-}
-
-#send:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-.voicebar {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    flex-wrap: wrap;
-    padding: 10px 0;
-}
-
-.voicebar button {
-    background: #14251a;
-    border: 1px solid #35543c;
-    color: #a6f5b8;
-    border-radius: 10px;
-    padding: 9px 13px;
-    cursor: pointer;
-}
-
-.voicebar button:hover {
-    border-color: #55e879;
-}
-
-.voicebar button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-#voice-status {
-    font-size: 11px;
-    color: #91a397;
-}
-
-.hint {
-    text-align: center;
-    color: #637268;
-    font-size: 10px;
-    margin-top: 10px;
-}
-
-@media(max-width:600px) {
-    header {
-        padding: 13px;
-    }
-
-    .message {
-        max-width: 94%;
-        font-size: 13px;
-    }
-
-    main {
-        padding: 12px 11px 0;
-    }
-
-    .quick {
-        padding: 10px;
-    }
-}
-
-
-/* ADMIN PANEL */
-body.admin-mode {
-    overflow: auto;
-    height: 100dvh;
-}
-
-body.admin-mode header,
-body.admin-mode .quick,
-body.admin-mode main {
-    display: none;
-}
-
-#admin-panel {
-    display: none;
-    width: 100%;
-    max-width: 850px;
-    margin: auto;
-    padding: 30px 20px;
-}
-
-body.admin-mode #admin-panel {
-    display: block;
-}
-
-.admin-card {
-    background: #111914;
-    border: 1px solid #304235;
-    border-radius: 18px;
-    padding: 24px;
-    margin: 15px 0;
-}
-
-.admin-card h2 {
-    color: #75f596;
-    margin-top: 0;
-}
-
-.admin-input {
-    width: 100%;
-    padding: 14px;
-    margin: 12px 0;
-    border: 1px solid #304235;
-    border-radius: 10px;
-    background: #090d0b;
-    color: white;
-}
-
-.admin-button {
-    padding: 12px 18px;
-    border: 0;
-    border-radius: 10px;
-    background: #55e879;
-    color: #061109;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 5px;
-}
-
-.admin-error {
-    color: #ff7777;
-    font-size: 13px;
-}
-
-.admin-success {
-    color: #55e879;
-}
-
-.admin-muted {
-    color: #91a397;
-    font-size: 13px;
-}
-
-    
 </style>
 </head>
 
 <body>
 
-<header>
-    <div class="brand">
-        <div class="logo">A</div>
-        <div>
-            <h1>AntZadEn AI Assistant</h1>
-            <div class="sub">Tvůj osobní AI asistent</div>
-        </div>
+<!-- PŘIHLÁŠENÍ A REGISTRACE -->
+<section id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo">A</div>
+      <div>
+        <h1>AntZadEn AI Assistant</h1>
+        <div class="sub">Tvůj osobní AI asistent</div>
+      </div>
     </div>
 
-   <div class="status" id="connection-status">● KONTROLUJI...</div>
-</header>
+    <div id="login-box">
+      <h2>Vítej zpět 👋</h2>
+      <p>Přihlas se ke svému účtu a pokračuj ve svých konverzacích.</p>
+      <input class="auth-input" id="login-username" placeholder="Uživatelské jméno" autocomplete="username">
+      <input class="auth-input" id="login-password" type="password" placeholder="Heslo" autocomplete="current-password">
+      <button class="primary" id="login-button">Přihlásit se</button>
+      <button class="auth-switch" id="show-register">Nemáš účet? Zaregistruj se</button>
+    </div>
 
-<div class="quick">
-    <button type="button" onclick="quickAsk('Co je to AntZadEn?')">💡 Co je AntZadEn?</button>
-    <button type="button" onclick="quickAsk('Napiš básničku o AntZadEn.')">✍️ Básnička</button>
-    <button type="button" onclick="quickAsk('Kolik je hodin?')">🕒 Kolik je hodin?</button>
-   <button type="button" onclick="quickAsk('Jaké je počasí u mě?')">🌤️ Počasí u mě</button>
-</div>
+    <div id="register-box" style="display:none">
+      <h2>Vytvořit účet ✨</h2>
+      <p>Registrace je zdarma. Tvoje chaty budou oddělené od ostatních uživatelů.</p>
+      <input class="auth-input" id="register-username" placeholder="Uživatelské jméno" autocomplete="username" maxlength="24">
+      <input class="auth-input" id="register-password" type="password" placeholder="Heslo (alespoň 8 znaků)" autocomplete="new-password">
+      <input class="auth-input" id="register-password2" type="password" placeholder="Zopakuj heslo" autocomplete="new-password">
+      <button class="primary" id="register-button">Vytvořit účet</button>
+      <button class="auth-switch" id="show-login">Už máš účet? Přihlas se</button>
+    </div>
 
-<main>
-    <section id="chat" aria-live="polite">
+    <div class="auth-error" id="auth-error"></div>
+    <p class="auth-note">AntZadEn AI • Powered by Cloudflare Workers AI</p>
+  </div>
+</section>
 
-        <div class="message bot">
-            <div class="botname">ANTZADEN AI</div>
-            <div class="markdown">
-                Ahoj! 👋 Jsem <strong>AntZadEn AI Assistant</strong>.<br>
-                Jsem připraven ti pomáhat. Zeptej se mě na cokoliv!
-            </div>
-        </div>
+<!-- HLAVNÍ APLIKACE -->
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <h1>AntZadEn AI Assistant</h1>
+        <div class="sub">Tvůj osobní AI asistent</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="user-label" id="user-label"></span>
+      <span class="status" id="connection-status">● KONTROLUJI...</span>
+      <button class="small-button" id="logout-button">Odhlásit</button>
+    </div>
+  </header>
 
-        <div id="typing">
+  <div id="layout">
+    <aside id="sidebar">
+      <button class="new-chat" id="new-chat">＋ Nový chat</button>
+      <div class="sidebar-title">TVÉ KONVERZACE</div>
+      <div id="chat-list"></div>
+      <div class="sidebar-bottom">
+        <button class="small-button" id="refresh-chats">↻ Obnovit chaty</button>
+      </div>
+    </aside>
+
+    <div id="main-area">
+      <div class="quick">
+        <button type="button" data-question="Co je to AntZadEn?">💡 Co je AntZadEn?</button>
+        <button type="button" data-question="Napiš básničku o AntZadEn.">✍️ Básnička</button>
+        <button type="button" data-question="Kolik je hodin?">🕒 Kolik je hodin?</button>
+        <button type="button" data-question="Jaké je počasí u mě?">🌤️ Počasí u mě</button>
+      </div>
+
+      <main>
+        <section id="chat" aria-live="polite">
+          <div id="typing">
             <span class="spinner"></span>
             AntZadEn AI přemýšlí…
-        </div>
+          </div>
+        </section>
 
-    </section>
-
-    <div class="bottom">
-
-        <form id="form">
-            <input
-                id="input"
-                type="text"
-                placeholder="Napiš zprávu..."
-                autocomplete="off"
-                maxlength="4000"
-            >
+        <div class="bottom">
+          <form id="form">
+            <input id="input" type="text" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
             <button id="send" type="submit">➤</button>
-        </form>
+          </form>
 
-        <div class="voicebar">
+          <div class="voicebar">
             <button type="button" id="voice-mic">🎤 Mluvit</button>
             <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
             <span id="voice-status">Hlas připraven</span>
-        </div>
+          </div>
 
-        <div class="hint">
-            AntZadEn AI • Powered by Cloudflare Workers AI
+          <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI</div>
         </div>
-
+      </main>
     </div>
-</main>
+  </div>
+</div>
+
+<!-- ADMINISTRACE -->
+<section id="admin-screen">
+  <div class="admin-wrap">
+    <div class="admin-card">
+      <div style="font-size:12px;color:#55e879;letter-spacing:2px">ANTZADEN AI</div>
+      <h1>⚙️ Administrace</h1>
+      <p class="admin-muted">Zabezpečený administrační panel</p>
+      <button class="small-button" id="admin-back">← Zpět na web</button>
+    </div>
+
+    <div class="admin-card" id="admin-login">
+      <h2>🔐 Přihlášení administrátora</h2>
+      <input id="admin-password" class="admin-input" type="password" placeholder="Administrační heslo">
+      <button class="admin-button" id="admin-login-button">Přihlásit se</button>
+      <p id="admin-error" class="admin-error"></p>
+    </div>
+
+    <div id="admin-dashboard" style="display:none">
+      <div class="admin-card">
+        <h2>📊 Přehled systému</h2>
+        <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
+        <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
+        <p>Databáze: <strong id="admin-db-status">Kontroluji...</strong></p>
+        <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
+        <button class="admin-button" id="admin-refresh">🔄 Obnovit stav</button>
+      </div>
+      <div class="admin-card">
+        <h2>🛠️ Systém</h2>
+        <p class="admin-muted">AntZadEn AI Assistant – administrace systému.</p>
+        <p>Verze: AntZadEn AI 2.0</p>
+      </div>
+      <div class="admin-card">
+        <button class="admin-button" id="admin-logout">🚪 Odhlásit administrátora</button>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script>
-// ==========================================
-// ANTZADEN AI – HLAVNÍ NASTAVENÍ
-// ==========================================
+"use strict";
 
+// ==========================================
+// NASTAVENÍ
+// ==========================================
 const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const form = document.getElementById("form");
-const send = document.getElementById("send");
-const typing = document.getElementById("typing");
+const $ = id => document.getElementById(id);
 
-    let conversation = [];
+let token = localStorage.getItem("antzaden_user_token") || "";
+let currentUser = null;
+let currentChatId = null;
 let busy = false;
 let voiceEnabled = false;
 let recognition = null;
 let listening = false;
-    
-// ==========================================
-// SKUTEČNÁ KONTROLA PŘIPOJENÍ AI
-// ==========================================
-
-async function checkConnection() {
-    const status = document.getElementById("connection-status");
-
-    if (!status) {
-        console.error("Chybí element connection-status!");
-        return;
-    }
-
-    status.textContent = "● KONTROLUJI...";
-    status.style.color = "#f0c85a";
-
-    try {
-        const response = await fetch(WORKER_URL, {
-            method: "GET",
-            cache: "no-store"
-        });
-
-        if (!response.ok) {
-            throw new Error("Server odpovídá chybou " + response.status);
-        }
-
-        const data = await response.json();
-
-        if (data.status === "online" && data.ai === true) {
-            status.textContent = "● AI ONLINE";
-            status.style.color = "#55e879";
-        } else {
-            status.textContent = "● AI NEDOSTUPNÁ";
-            status.style.color = "#ff7777";
-        }
-
-    } catch (error) {
-        status.textContent = "● OFFLINE";
-        status.style.color = "#ff7777";
-        console.error("Kontrola AI selhala:", error);
-    }
-}
-
-checkConnection();
-setInterval(checkConnection, 30000);
+let adminToken = sessionStorage.getItem("antzaden_admin_token") || "";
 
 // ==========================================
-// POSOUVÁNÍ CHATU
+// API – KOMUNIKACE S WORKEREM
 // ==========================================
+async function api(action, extra = {}, useUserToken = true) {
+  const headers = {"Content-Type":"application/json"};
 
-function scrollDown() {
-    if (chat) {
-        chat.scrollTop = chat.scrollHeight;
-    }
+  if (useUserToken && token) {
+    headers.Authorization = "Bearer " + token;
+  }
+
+  const response = await fetch(WORKER_URL, {
+    method:"POST",
+    headers,
+    body:JSON.stringify({
+      action,
+      ...(useUserToken && token ? {token} : {}),
+      ...extra
+    })
+  });
+
+  const raw = await response.text();
+  let data;
+
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Server vrátil neplatnou odpověď: " + raw.slice(0,180));
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || "Chyba serveru: " + response.status);
+  }
+
+  return data;
 }
 
 // ==========================================
-// BEZPEČNÉ ZPRACOVÁNÍ MARKDOWNU
+// PŘIHLÁŠENÍ / REGISTRACE
 // ==========================================
+function showAuthMode(mode) {
+  $("login-box").style.display = mode === "login" ? "block" : "none";
+  $("register-box").style.display = mode === "register" ? "block" : "none";
+  $("auth-error").textContent = "";
+}
 
+$("show-register").onclick = () => showAuthMode("register");
+$("show-login").onclick = () => showAuthMode("login");
+
+async function finishLogin(data) {
+  token = data.token;
+  currentUser = data.user;
+  localStorage.setItem("antzaden_user_token", token);
+  $("auth-screen").style.display = "none";
+  $("admin-screen").style.display = "none";
+  $("app").style.display = "block";
+  $("user-label").textContent = currentUser.username;
+  await loadChats();
+}
+
+$("login-button").onclick = async () => {
+  const username = $("login-username").value.trim();
+  const password = $("login-password").value;
+
+  if (!username || !password) {
+    $("auth-error").textContent = "Vyplň uživatelské jméno a heslo.";
+    return;
+  }
+
+  $("login-button").disabled = true;
+  $("auth-error").textContent = "Přihlašuji...";
+
+  try {
+    const data = await api("login", {username,password}, false);
+    await finishLogin(data);
+  } catch (error) {
+    $("auth-error").textContent = error.message;
+  } finally {
+    $("login-button").disabled = false;
+  }
+};
+
+$("register-button").onclick = async () => {
+  const username = $("register-username").value.trim().toLowerCase();
+  const password = $("register-password").value;
+  const password2 = $("register-password2").value;
+
+  if (password !== password2) {
+    $("auth-error").textContent = "Hesla se neshodují.";
+    return;
+  }
+
+  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+    $("auth-error").textContent = "Jméno musí mít 3–24 znaků: a-z, 0-9 nebo _.";
+    return;
+  }
+
+  if (password.length < 8) {
+    $("auth-error").textContent = "Heslo musí mít alespoň 8 znaků.";
+    return;
+  }
+
+  $("register-button").disabled = true;
+  $("auth-error").textContent = "Vytvářím účet...";
+
+  try {
+    const data = await api("register", {username,password}, false);
+    await finishLogin(data);
+  } catch (error) {
+    $("auth-error").textContent = error.message;
+  } finally {
+    $("register-button").disabled = false;
+  }
+};
+
+$("logout-button").onclick = () => {
+  token = "";
+  currentUser = null;
+  currentChatId = null;
+  localStorage.removeItem("antzaden_user_token");
+  $("app").style.display = "none";
+  $("auth-screen").style.display = "flex";
+  $("login-password").value = "";
+  showAuthMode("login");
+};
+
+// Obnovení přihlášení po návratu na web
+async function restoreSession() {
+  if (!token) {
+    $("auth-screen").style.display = "flex";
+    return;
+  }
+
+  try {
+    const data = await api("me");
+    currentUser = data.user;
+    $("auth-screen").style.display = "none";
+    $("app").style.display = "block";
+    $("user-label").textContent = currentUser.username;
+    await loadChats();
+  } catch (error) {
+    token = "";
+    localStorage.removeItem("antzaden_user_token");
+    $("auth-screen").style.display = "flex";
+  }
+}
+
+// ==========================================
+// CHATY – D1 HISTORIE
+// ==========================================
+async function loadChats() {
+  const list = $("chat-list");
+  list.innerHTML = "<div class='sub'>Načítám chaty...</div>";
+
+  try {
+    const data = await api("chats-list");
+    list.innerHTML = "";
+
+    for (const item of data.chats || []) {
+      const row = document.createElement("div");
+      row.className = "chat-item";
+
+      const select = document.createElement("button");
+      select.className = "chat-select" + (item.id === currentChatId ? " active" : "");
+      select.textContent = item.title || "Nový chat";
+      select.title = item.title || "Nový chat";
+      select.onclick = () => openChat(item.id);
+
+      const del = document.createElement("button");
+      del.className = "chat-delete";
+      del.textContent = "×";
+      del.title = "Smazat chat";
+      del.onclick = async event => {
+        event.stopPropagation();
+        if (!confirm("Opravdu chceš tento chat smazat?")) return;
+
+        try {
+          await api("chat-delete", {chatId:item.id});
+          if (currentChatId === item.id) {
+            currentChatId = null;
+            await createChat();
+          }
+          await loadChats();
+        } catch (error) {
+          alert(error.message);
+        }
+      };
+
+      row.append(select,del);
+      list.appendChild(row);
+    }
+
+    if (!data.chats || !data.chats.length) {
+      list.innerHTML = "<div class='sub'>Zatím nemáš žádné chaty.</div>";
+    }
+
+    // Automaticky otevři poslední chat
+    if (!currentChatId && data.chats && data.chats.length) {
+      await openChat(data.chats[0].id);
+    } else if (!currentChatId) {
+      await createChat();
+    }
+
+  } catch (error) {
+    list.innerHTML = "<div class='sub'>Chyba: " + escapeHTML(error.message) + "</div>";
+  }
+}
+
+function clearChatView() {
+  $("chat").innerHTML = "";
+  const indicator = document.createElement("div");
+  indicator.id = "typing";
+  indicator.innerHTML = '<span class="spinner"></span> AntZadEn AI přemýšlí…';
+  $("chat").appendChild(indicator);
+}
+
+async function createChat() {
+  try {
+    const data = await api("chat-create");
+    currentChatId = data.chat.id;
+    clearChatView();
+    addMessage("Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!", false);
+    await loadChatsListOnly();
+  } catch (error) {
+    addMessage("Nepodařilo se vytvořit chat: " + error.message, false);
+  }
+}
+
+async function loadChatsListOnly() {
+  const data = await api("chats-list");
+  const list = $("chat-list");
+  list.innerHTML = "";
+
+  for (const item of data.chats || []) {
+    const row = document.createElement("div");
+    row.className = "chat-item";
+
+    const select = document.createElement("button");
+    select.className = "chat-select" + (item.id === currentChatId ? " active" : "");
+    select.textContent = item.title || "Nový chat";
+    select.title = item.title || "Nový chat";
+    select.onclick = () => openChat(item.id);
+
+    const del = document.createElement("button");
+    del.className = "chat-delete";
+    del.textContent = "×";
+    del.title = "Smazat chat";
+    del.onclick = async () => {
+      if (!confirm("Opravdu chceš tento chat smazat?")) return;
+      try {
+        await api("chat-delete", {chatId:item.id});
+        currentChatId = null;
+        await loadChats();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    row.append(select,del);
+    list.appendChild(row);
+  }
+}
+
+async function openChat(chatId) {
+  currentChatId = chatId;
+  clearChatView();
+
+  try {
+    const data = await api("chat-get", {chatId});
+    clearChatView();
+
+    if (!data.messages || !data.messages.length) {
+      addMessage("Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!", false);
+    } else {
+      for (const msg of data.messages) {
+        addMessage(msg.content, msg.role === "user");
+      }
+    }
+
+    await loadChatsListOnly();
+    scrollDown();
+  } catch (error) {
+    addMessage("Nepodařilo se načíst chat: " + error.message, false);
+  }
+}
+
+$("new-chat").onclick = createChat;
+$("refresh-chats").onclick = loadChats;
+
+// ==========================================
+// ZPRÁVY A MARKDOWN
+// ==========================================
 function escapeHTML(text) {
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
 function inlineMarkdown(text) {
-    let html = escapeHTML(text);
-
-    html = html.replace(
-        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
-
-    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
-    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    html = html.replace(/_(.+?)_/g, "<em>$1</em>");
-
-    return html;
+  let html = escapeHTML(text);
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  html = html.replace(/`([^`]+)`/g,"<code>$1</code>");
+  html = html.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
+  html = html.replace(/\*(.+?)\*/g,"<em>$1</em>");
+  return html;
 }
 
 function renderMarkdown(text) {
-    const lines = String(text).split("\n");
+  const lines = String(text).split("\n");
+  let html = "";
+  let paragraph = [];
+  let list = null;
+  let code = false;
+  let codeLines = [];
 
-    let html = "";
-    let inCode = false;
-    let codeLines = [];
-    let listType = null;
-    let paragraph = [];
+  const flush = () => {
+    if (paragraph.length) {
+      html += "<p>" + paragraph.map(inlineMarkdown).join("<br>") + "</p>";
+      paragraph = [];
+    }
+  };
 
-    function closeList() {
-        if (listType) {
-            html += listType === "ul" ? "</ul>" : "</ol>";
-            listType = null;
-        }
+  const closeList = () => {
+    if (list) {
+      html += list === "ul" ? "</ul>" : "</ol>";
+      list = null;
+    }
+  };
+
+  for (const line of lines) {
+    if (line.trim().startsWith("```")) {
+      flush(); closeList();
+      if (code) {
+        html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+        codeLines = [];
+        code = false;
+      } else code = true;
+      continue;
     }
 
-    function flushParagraph() {
-        if (paragraph.length) {
-            html += "<p>" +
-                paragraph.map(inlineMarkdown).join("<br>") +
-                "</p>";
-
-            paragraph = [];
-        }
+    if (code) {
+      codeLines.push(line);
+      continue;
     }
 
-    for (const line of lines) {
-        if (line.trim().startsWith("```")) {
-            flushParagraph();
-            closeList();
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flush(); closeList();
+      const n = heading[1].length;
+      html += `<h${n}>${inlineMarkdown(heading[2])}</h${n}>`;
+      continue;
+    }
 
-            if (inCode) {
-                html += "<pre><code>" +
-                    escapeHTML(codeLines.join("\n")) +
-                    "</code></pre>";
+    const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
 
-                codeLines = [];
-                inCode = false;
-            } else {
-                inCode = true;
-            }
-
-            continue;
-        }
-
-        if (inCode) {
-            codeLines.push(line);
-            continue;
-        }
-
-        const heading = line.match(/^(#{1,3})\s+(.+)$/);
-
-        if (heading) {
-            flushParagraph();
-            closeList();
-
-            const level = heading[1].length;
-            html += `<h${level}>${inlineMarkdown(heading[2])}</h${level}>`;
-            continue;
-        }
-
-        const bullet = line.match(/^\s*[-*]\s+(.+)$/);
-        const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
-
-        if (bullet || numbered) {
-            flushParagraph();
-
-            const type = bullet ? "ul" : "ol";
-
-            if (listType !== type) {
-                closeList();
-                html += type === "ul" ? "<ul>" : "<ol>";
-                listType = type;
-            }
-
-            html += "<li>" +
-                inlineMarkdown((bullet || numbered)[1]) +
-                "</li>";
-
-            continue;
-        }
-
-        const quote = line.match(/^\s*>\s?(.*)$/);
-
-        if (quote) {
-            flushParagraph();
-            closeList();
-
-            html += "<blockquote>" +
-                inlineMarkdown(quote[1]) +
-                "</blockquote>";
-
-            continue;
-        }
-
-        if (!line.trim()) {
-            flushParagraph();
-            closeList();
-            continue;
-        }
-
+    if (bullet || numbered) {
+      flush();
+      const type = bullet ? "ul" : "ol";
+      if (list !== type) {
         closeList();
-        paragraph.push(line);
+        html += type === "ul" ? "<ul>" : "<ol>";
+        list = type;
+      }
+      html += "<li>" + inlineMarkdown((bullet || numbered)[1]) + "</li>";
+      continue;
     }
 
-    if (inCode) {
-        html += "<pre><code>" +
-            escapeHTML(codeLines.join("\n")) +
-            "</code></pre>";
+    const quote = line.match(/^\s*>\s?(.*)$/);
+    if (quote) {
+      flush(); closeList();
+      html += "<blockquote>" + inlineMarkdown(quote[1]) + "</blockquote>";
+      continue;
     }
 
-    flushParagraph();
+    if (!line.trim()) {
+      flush(); closeList();
+      continue;
+    }
+
     closeList();
+    paragraph.push(line);
+  }
 
-    return html;
+  if (code) html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+  flush(); closeList();
+  return html;
 }
 
+function addMessage(text, isUser) {
+  const box = document.createElement("div");
+  box.className = "message " + (isUser ? "user" : "bot");
 
+  if (!isUser) {
+    const name = document.createElement("div");
+    name.className = "botname";
+    name.textContent = "ANTZADEN AI";
+    box.appendChild(name);
+  }
 
-// ==========================================
-// ZOBRAZOVÁNÍ ZPRÁV
-// ==========================================
+  const content = document.createElement("div");
+  if (isUser) content.textContent = text;
+  else {
+    content.className = "markdown";
+    content.innerHTML = renderMarkdown(text);
+  }
 
-function addMessage(text, user = false) {
-    const box = document.createElement("div");
-
-    box.className = "message " + (user ? "user" : "bot");
-
-    if (!user) {
-        const name = document.createElement("div");
-
-        name.className = "botname";
-        name.textContent = "ANTZADEN AI";
-
-        box.appendChild(name);
-    }
-
-    const content = document.createElement("div");
-
-    if (user) {
-        content.textContent = text;
-    } else {
-        content.className = "markdown";
-        content.innerHTML = renderMarkdown(text);
-    }
-
-    box.appendChild(content);
-
-    if (typing && typing.parentNode === chat) {
-        chat.insertBefore(box, typing);
-    } else {
-        chat.appendChild(box);
-    }
-
-    scrollDown();
-
-    return content;
+  box.appendChild(content);
+  const indicator = $("typing");
+  $("chat").insertBefore(box, indicator);
+  scrollDown();
+  return content;
 }
 
-// ==========================================
-// RYCHLÉ OTÁZKY
-// ==========================================
-
-function quickAsk(text) {
-    input.value = text;
-    form.requestSubmit();
+function scrollDown() {
+  $("chat").scrollTop = $("chat").scrollHeight;
 }
-
-// ==========================================
-// POČASÍ
-// ==========================================
-
-function weatherDescription(code) {
-    const descriptions = {
-        0: "jasno",
-        1: "převážně jasno",
-        2: "polojasno",
-        3: "zataženo",
-        45: "mlha",
-        48: "mrznoucí mlha",
-        51: "slabé mrholení",
-        53: "mrholení",
-        55: "silné mrholení",
-        61: "slabý déšť",
-        63: "déšť",
-        65: "silný déšť",
-        71: "slabé sněžení",
-        73: "sněžení",
-        75: "silné sněžení",
-        80: "přeháňky",
-        81: "silnější přeháňky",
-        82: "prudké přeháňky",
-        95: "bouřky",
-        96: "bouřky s kroupami",
-        99: "silné bouřky s kroupami"
-    };
-
-    return descriptions[code] || "proměnlivé počasí";
-}
-
-function getTargetDate(query) {
-    const now = new Date();
-
-    const date = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-    );
-
-    const q = query.toLowerCase();
-
-    if (q.includes("pozítří")) {
-        date.setDate(date.getDate() + 2);
-        return date;
-    }
-
-    if (q.includes("zítra")) {
-        date.setDate(date.getDate() + 1);
-        return date;
-    }
-
-    const weekdays = {
-        "neděli": 0,
-        "pondělí": 1,
-        "úterý": 2,
-        "středu": 3,
-        "čtvrtek": 4,
-        "pátek": 5,
-        "sobotu": 6
-    };
-
-    for (const [name, day] of Object.entries(weekdays)) {
-        if (q.includes(name)) {
-            let difference = (day - date.getDay() + 7) % 7;
-
-            if (difference === 0) {
-                difference = 7;
-            }
-
-            date.setDate(date.getDate() + difference);
-            return date;
-        }
-    }
-
-    return date;
-}
-
-function dateToISO(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-
-
-// ==========================================
-// POLOHA ZAŘÍZENÍ A NÁHRADNÍ ZPŮSOBY
-// ==========================================
-
-async function getDeviceLocation() {
-    // 1. GPS poloha zařízení
-    if (navigator.geolocation) {
-        try {
-            const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(
-                    resolve,
-                    reject,
-                    {
-                        enableHighAccuracy: false,
-                        timeout: 8000,
-                        maximumAge: 300000
-                    }
-                );
-            });
-
-            return {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                name: "Poloha zařízení (GPS)"
-            };
-        } catch (error) {
-            console.warn("GPS poloha není dostupná:", error.message);
-        }
-    }
-
-    // 2. Přibližná poloha podle IP adresy
-    try {
-        const response = await fetch("https://ipapi.co/json/", {
-            cache: "no-store"
-        });
-
-        if (!response.ok) throw new Error("IP poloha není dostupná");
-
-        const data = await response.json();
-
-        if (data.latitude && data.longitude) {
-            return {
-                latitude: data.latitude,
-                longitude: data.longitude,
-                name: data.city || "Přibližná poloha podle internetu"
-            };
-        }
-    } catch (error) {
-        console.warn("IP poloha není dostupná:", error);
-    }
-
-    // 3. Ruční zadání města
-    const city = prompt(
-        "Nepodařilo se zjistit tvoji polohu.\nZadej město, pro které chceš počasí:"
-    );
-
-    if (!city || !city.trim()) {
-        throw new Error("Nebyla zadána žádná poloha.");
-    }
-
-    const response = await fetch(
-        "https://geocoding-api.open-meteo.com/v1/search?name=" +
-        encodeURIComponent(city.trim()) +
-        "&count=1&language=cs&format=json"
-    );
-
-    if (!response.ok) {
-        throw new Error("Nepodařilo se vyhledat město.");
-    }
-
-    const data = await response.json();
-
-    if (!data.results || !data.results.length) {
-        throw new Error("Město nebylo nalezeno. Zkus zadat jiný název.");
-    }
-
-    const place = data.results[0];
-
-    return {
-        latitude: place.latitude,
-        longitude: place.longitude,
-        name: [place.name, place.country].filter(Boolean).join(", ")
-    };
-}
-
-// ==========================================
-// POČASÍ PODLE ZJIŠTĚNÉ POLOHY
-// ==========================================
-
-async function getWeather(query) {
-    const location = await getDeviceLocation();
-
-    const latitude = location.latitude;
-    const longitude = location.longitude;
-
-    const targetDate = getTargetDate(query);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const difference = Math.round(
-        (targetDate - today) / 86400000
-    );
-
-    if (difference < 0 || difference > 15) {
-        return "Předpověď pro tento den zatím není dostupná. Zkus datum v následujících 15 dnech.";
-    }
-
-    const params = new URLSearchParams({
-        latitude: latitude,
-        longitude: longitude,
-        daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-        timezone: "auto",
-        forecast_days: "16"
-    });
-
-    const response = await fetch(
-        "https://api.open-meteo.com/v1/forecast?" +
-        params.toString()
-    );
-
-    if (!response.ok) {
-        throw new Error("Nepodařilo se načíst předpověď počasí.");
-    }
-
-    const data = await response.json();
-
-    if (!data.daily || !data.daily.time) {
-        throw new Error("Meteorologická služba nevrátila předpověď.");
-    }
-
-    const wantedDate = dateToISO(targetDate);
-    const index = data.daily.time.indexOf(wantedDate);
-
-    if (index === -1) {
-        return "Předpověď pro vybraný den není dostupná.";
-    }
-
-    const min = data.daily.temperature_2m_min[index];
-    const max = data.daily.temperature_2m_max[index];
-    const rain = data.daily.precipitation_probability_max[index];
-    const code = data.daily.weather_code[index];
-
-    const dateText = targetDate.toLocaleDateString("cs-CZ", {
-        weekday: "long",
-        day: "numeric",
-        month: "long"
-    });
-
-    return `## 🌤️ Počasí
-
-**📍 Místo:** ${location.name}
-
-**📅 ${dateText}**
-
-- 🌡️ Teplota: **${min} až ${max} °C**
-- ☁️ Počasí: **${weatherDescription(code)}**
-- 🌧️ Pravděpodobnost srážek: **${rain ?? "údaj není dostupný"} %**
-
-*Předpověď se může ještě změnit.*`;
-}
-
-
-// ==========================================
-// MÍSTNÍ ODPOVĚDI
-// ==========================================
-
-async function getLocalAnswer(query) {
-    const q = query.toLowerCase();
-
-    if (
-        q.includes("kolik je hodin") ||
-        q === "čas"
-    ) {
-        return "Právě je **" +
-            new Date().toLocaleTimeString("cs-CZ", {
-                hour: "2-digit",
-                minute: "2-digit"
-            }) +
-            "** podle času tvého zařízení.";
-    }
-
-    if (
-        q.includes("počasí") ||
-        q.includes("předpověď") ||
-        q.includes("kolik bude stupň") ||
-        q.includes("teplota")
-    ) {
-        return await getWeather(query);
-    }
-
-    return null;
-}
-
-// ==========================================
-// KOMUNIKACE S CLOUDFLARE WORKEREM
-// ==========================================
-
-async function askAI(query) {
-    const history = conversation.slice(-13, -1).map(item =>
-        (item.role === "user" ? "Uživatel: " : "Asistent: ") +
-        item.content
-    ).join("\n");
-
-    const message =
-        "Jsi AntZadEn AI Assistant. Odpovídej česky, přátelsky a pravdivě.\n\n" +
-        (history ? "PŘEDCHOZÍ KONVERZACE:\n" + history + "\n\n" : "") +
-        "NOVÁ ZPRÁVA:\n" + query;
-
-    const controller = new AbortController();
-
-    const timeout = setTimeout(() => {
-        controller.abort();
-    }, 60000);
-
-    try {
-        const response = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: message
-            }),
-            signal: controller.signal
-        });
-
-        const raw = await response.text();
-
-        let data;
-
-        try {
-            data = JSON.parse(raw);
-        } catch (error) {
-            throw new Error(
-                "Cloudflare vrátil neplatnou odpověď: " +
-                raw.slice(0, 200)
-            );
-        }
-
-        if (!response.ok) {
-            throw new Error(
-                data.error || "Chyba serveru: " + response.status
-            );
-        }
-
-        if (!data.reply) {
-            throw new Error("AI nevrátila žádnou odpověď.");
-        }
-
-        return data.reply;
-
-    } catch (error) {
-        if (error.name === "AbortError") {
-            throw new Error(
-                "AI neodpověděla do 60 sekund. Zkontroluj Cloudflare Worker."
-            );
-        }
-
-        throw error;
-
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-// ==========================================
-// ANIMACE PSANÍ
-// ==========================================
 
 async function typeAnswer(element, text) {
-    const characters = Array.from(String(text));
-    const step = 3;
+  const chars = Array.from(String(text));
+  element.textContent = "";
 
-    element.textContent = "";
-
-    for (let i = 0; i < characters.length; i += step) {
-        element.textContent = characters
-            .slice(0, i + step)
-            .join("");
-
-        scrollDown();
-
-        await new Promise(resolve =>
-            setTimeout(resolve, 10)
-        );
-    }
-
-    element.innerHTML = renderMarkdown(text);
+  for (let i=0;i<chars.length;i+=3) {
+    element.textContent = chars.slice(0,i+3).join("");
     scrollDown();
-}
-// ==========================================
-// HLASOVÝ VÝSTUP
-// ==========================================
+    await new Promise(resolve => setTimeout(resolve,10));
+  }
 
-function speakAnswer(text) {
-    if (!voiceEnabled || !("speechSynthesis" in window)) {
-        return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const cleanText = text
-        .replace(/```[\s\S]*?```/g, "Kód")
-        .replace(/[#*`_]/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-
-    const speech = new SpeechSynthesisUtterance(cleanText);
-
-    speech.lang = "cs-CZ";
-    speech.rate = 1;
-
-    window.speechSynthesis.speak(speech);
-}
-
-const voiceToggle = document.getElementById("voice-toggle");
-
-if (voiceToggle) {
-    voiceToggle.onclick = function() {
-        voiceEnabled = !voiceEnabled;
-
-        this.textContent = voiceEnabled
-            ? "🔊 Hlas: zapnutý"
-            : "🔊 Hlas: vypnutý";
-
-        if (
-            !voiceEnabled &&
-            "speechSynthesis" in window
-        ) {
-            window.speechSynthesis.cancel();
-        }
-    };
+  element.innerHTML = renderMarkdown(text);
+  scrollDown();
 }
 
 // ==========================================
-// HLASOVÉ ZADÁVÁNÍ
+// POČASÍ – OPEN-METEO
 // ==========================================
-
-const Recognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-const mic = document.getElementById("voice-mic");
-const voiceStatus = document.getElementById("voice-status");
-
-if (Recognition && mic) {
-    recognition = new Recognition();
-
-    recognition.lang = "cs-CZ";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    mic.onclick = () => {
-        if (listening) return;
-
-        try {
-            recognition.start();
-
-            listening = true;
-
-            if (voiceStatus) {
-                voiceStatus.textContent = "🎤 Poslouchám...";
-            }
-
-        } catch (error) {
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "Mikrofon se nepodařilo spustit.";
-            }
-        }
-    };
-
-    recognition.onresult = event => {
-        const spoken = event.results[0][0].transcript;
-
-        input.value = spoken;
-
-        if (voiceStatus) {
-            voiceStatus.textContent = "Rozpoznáno: " + spoken;
-        }
-
-        form.requestSubmit();
-    };
-
-    recognition.onerror = event => {
-        if (voiceStatus) {
-            voiceStatus.textContent =
-                "Chyba mikrofonu: " + event.error;
-        }
-    };
-
-    recognition.onend = () => {
-        listening = false;
-
-        if (
-            voiceStatus &&
-            voiceStatus.textContent === "🎤 Poslouchám..."
-        ) {
-            voiceStatus.textContent = "Hlas připraven";
-        }
-    };
-
-} else if (mic) {
-    mic.disabled = true;
-
-    if (voiceStatus) {
-        voiceStatus.textContent =
-            "Hlasové zadávání tento prohlížeč nepodporuje.";
-    }
+function weatherDescription(code) {
+  const descriptions = {
+    0:"jasno",1:"převážně jasno",2:"polojasno",3:"zataženo",
+    45:"mlha",48:"mrznoucí mlha",51:"slabé mrholení",
+    53:"mrholení",55:"silné mrholení",61:"slabý déšť",
+    63:"déšť",65:"silný déšť",71:"slabé sněžení",
+    73:"sněžení",75:"silné sněžení",80:"přeháňky",
+    81:"silnější přeháňky",82:"prudké přeháňky",
+    95:"bouřky",96:"bouřky s kroupami",99:"silné bouřky"
+  };
+  return descriptions[code] || "proměnlivé počasí";
 }
 
-// ==========================================
-// ODESÍLÁNÍ ZPRÁV
-// ==========================================
-
-form.addEventListener("submit", async function(event) {
-    event.preventDefault();
-
-    const query = input.value.trim();
-
-    if (!query || busy) return;
-
-    busy = true;
-
-    send.disabled = true;
-    input.disabled = true;
-
-    addMessage(query, true);
-
-    input.value = "";
-
-    conversation.push({
-        role: "user",
-        content: query
-    });
-
-    typing.style.display = "flex";
-    scrollDown();
-
+async function getDeviceLocation() {
+  if (navigator.geolocation) {
     try {
-        let answer = await getLocalAnswer(query);
-
-        if (answer === null) {
-            answer = await askAI(query);
-        }
-
-        typing.style.display = "none";
-
-        const target = addMessage("", false);
-
-        await typeAnswer(target, answer);
-
-        conversation.push({
-            role: "assistant",
-            content: answer
+      const pos = await new Promise((resolve,reject) => {
+        navigator.geolocation.getCurrentPosition(resolve,reject,{
+          enableHighAccuracy:false,timeout:7000,maximumAge:300000
         });
-
-        if (conversation.length > 24) {
-            conversation = conversation.slice(-24);
-        }
-
-        speakAnswer(answer);
-
-    } catch (error) {
-        typing.style.display = "none";
-
-        addMessage(
-            "Nepodařilo se získat odpověď.\n\n" +
-            error.message
-        );
-
-        console.error("AntZadEn AI:", error);
-
-    } finally {
-        busy = false;
-
-        send.disabled = false;
-        input.disabled = false;
-        input.focus();
-
-        scrollDown();
+      });
+      return {
+        latitude:pos.coords.latitude,
+        longitude:pos.coords.longitude,
+        name:"Poloha zařízení"
+      };
+    } catch (e) {
+      console.warn("GPS poloha není dostupná:",e.message);
     }
+  }
+
+  try {
+    const r = await fetch("https://ipapi.co/json/");
+    const d = await r.json();
+    if (d.latitude && d.longitude) {
+      return {
+        latitude:d.latitude,
+        longitude:d.longitude,
+        name:d.city || "Přibližná poloha"
+      };
+    }
+  } catch(e) {}
+
+  const city = prompt("Poloha není dostupná. Zadej město:");
+  if (!city) throw new Error("Nebyla zadána poloha.");
+
+  const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=1&language=cs&format=json");
+  const d = await r.json();
+  if (!d.results?.length) throw new Error("Město nebylo nalezeno.");
+
+  return {
+    latitude:d.results[0].latitude,
+    longitude:d.results[0].longitude,
+    name:d.results[0].name
+  };
+}
+
+function targetWeatherDate(query) {
+  const date = new Date();
+  date.setHours(0,0,0,0);
+  const q = query.toLowerCase();
+
+  if (q.includes("pozítří")) date.setDate(date.getDate()+2);
+  else if (q.includes("zítra")) date.setDate(date.getDate()+1);
+
+  return date;
+}
+
+async function getWeather(query) {
+  const loc = await getDeviceLocation();
+  const date = targetWeatherDate(query);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const days = Math.round((date-today)/86400000);
+  if (days<0 || days>15) return "Předpověď pro tento den zatím není dostupná.";
+
+  const iso = [
+    date.getFullYear(),
+    String(date.getMonth()+1).padStart(2,"0"),
+    String(date.getDate()).padStart(2,"0")
+  ].join("-");
+
+  const params = new URLSearchParams({
+    latitude:loc.latitude,
+    longitude:loc.longitude,
+    daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+    timezone:"auto",
+    forecast_days:"16"
+  });
+
+  const r = await fetch("https://api.open-meteo.com/v1/forecast?"+params);
+  if (!r.ok) throw new Error("Počasí se nepodařilo načíst.");
+
+  const d = await r.json();
+  const i = d.daily.time.indexOf(iso);
+  if (i<0) return "Předpověď pro vybraný den není dostupná.";
+
+  const dateText = date.toLocaleDateString("cs-CZ",{
+    weekday:"long",day:"numeric",month:"long"
+  });
+
+  return `## 🌤️ Počasí
+
+**📍 Místo:** ${loc.name}
+**📅 ${dateText}**
+
+- 🌡️ Teplota: **${d.daily.temperature_2m_min[i]} až ${d.daily.temperature_2m_max[i]} °C**
+- ☁️ Počasí: **${weatherDescription(d.daily.weather_code[i])}**
+- 🌧️ Pravděpodobnost srážek: **${d.daily.precipitation_probability_max[i] ?? "neznámá"} %**
+
+*Předpověď se může změnit.*`;
+}
+
+async function getLocalAnswer(query) {
+  const q = query.toLowerCase();
+
+  if (q.includes("kolik je hodin")) {
+    return "Právě je **"+new Date().toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})+"** podle času tvého zařízení.";
+  }
+
+  if (q.includes("počasí") || q.includes("předpověď") || q.includes("teplota")) {
+    return await getWeather(query);
+  }
+
+  return null;
+}
+
+// ==========================================
+// ODESLÁNÍ ZPRÁVY
+// ==========================================
+async function sendMessage(query) {
+  if (busy || !query.trim()) return;
+
+  if (!currentChatId) {
+    await createChat();
+    if (!currentChatId) return;
+  }
+
+  busy = true;
+  $("send").disabled = true;
+  $("input").disabled = true;
+
+  addMessage(query,true);
+  $("typing").style.display = "flex";
+  scrollDown();
+
+  try {
+    let answer = null;
+
+    // Lokální funkce – počasí a čas
+    try {
+      answer = await getLocalAnswer(query);
+    } catch(error) {
+      answer = "Nepodařilo se zjistit místní informace: " + error.message;
+    }
+
+    if (answer !== null) {
+      // Lokální odpověď se ukládá ručně
+      await api("chat-save-message",{
+        chatId:currentChatId,
+        role:"user",
+        content:query
+      });
+
+      await api("chat-save-message",{
+        chatId:currentChatId,
+        role:"assistant",
+        content:answer
+      });
+    } else {
+      // Worker sám ukládá dotaz i AI odpověď
+      const data = await api("chat-send",{
+        chatId:currentChatId,
+        message:query
+      });
+      answer = data.reply;
+    }
+
+    $("typing").style.display = "none";
+    const target = addMessage("",false);
+    await typeAnswer(target,answer);
+    speakAnswer(answer);
+    await loadChatsListOnly();
+
+  } catch(error) {
+    $("typing").style.display = "none";
+    addMessage("Nepodařilo se získat odpověď.\n\n"+error.message,false);
+    console.error(error);
+  } finally {
+    busy = false;
+    $("send").disabled = false;
+    $("input").disabled = false;
+    $("input").focus();
+    scrollDown();
+  }
+}
+
+$("form").addEventListener("submit",event => {
+  event.preventDefault();
+  const value = $("input").value.trim();
+  if (!value) return;
+  $("input").value = "";
+  sendMessage(value);
+});
+
+document.querySelectorAll(".quick button").forEach(button => {
+  button.onclick = () => {
+    $("input").value = button.dataset.question;
+    $("form").requestSubmit();
+  };
 });
 
 // ==========================================
-// SPUŠTĚNÍ
+// HLAS
 // ==========================================
+function speakAnswer(text) {
+  if (!voiceEnabled || !("speechSynthesis" in window)) return;
 
-console.log("AntZadEn AI Assistant byl úspěšně načten.");
+  window.speechSynthesis.cancel();
+  const clean = text
+    .replace(/```[\s\S]*?```/g,"Kód")
+    .replace(/[#*`_]/g,"")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
 
-</script>
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = "cs-CZ";
+  utterance.rate = 1;
+  window.speechSynthesis.speak(utterance);
+}
 
-    
-<section id="admin-panel">
+$("voice-toggle").onclick = () => {
+  voiceEnabled = !voiceEnabled;
+  $("voice-toggle").textContent = voiceEnabled ? "🔊 Hlas: zapnutý" : "🔊 Hlas: vypnutý";
+  if (!voiceEnabled && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+};
 
-    <div class="admin-card">
-        <div style="font-size:12px;color:#55e879;letter-spacing:2px">
-            ANTZADEN AI
-        </div>
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        <h1 style="margin-top:10px">⚙️ Administrace</h1>
-        <p class="admin-muted">Zabezpečený administrační panel</p>
-    </div>
+if (Recognition) {
+  recognition = new Recognition();
+  recognition.lang = "cs-CZ";
+  recognition.continuous = false;
+  recognition.interimResults = false;
 
-    <div class="admin-card" id="admin-login">
-        <h2>🔐 Přihlášení administrátora</h2>
+  $("voice-mic").onclick = () => {
+    if (listening) return;
+    try {
+      recognition.start();
+      listening = true;
+      $("voice-status").textContent = "🎤 Poslouchám...";
+    } catch(e) {
+      $("voice-status").textContent = "Mikrofon se nepodařilo spustit.";
+    }
+  };
 
-        <input
-            id="admin-password"
-            class="admin-input"
-            type="password"
-            placeholder="Administrační heslo"
-            autocomplete="current-password"
-        >
+  recognition.onresult = event => {
+    $("input").value = event.results[0][0].transcript;
+    $("voice-status").textContent = "Rozpoznáno.";
+    $("form").requestSubmit();
+  };
 
-        <button class="admin-button" id="admin-login-button">
-            Přihlásit se
-        </button>
+  recognition.onerror = event => {
+    $("voice-status").textContent = "Chyba mikrofonu: " + event.error;
+  };
 
-        <p id="admin-error" class="admin-error"></p>
-    </div>
+  recognition.onend = () => {
+    listening = false;
+    if ($("voice-status").textContent === "🎤 Poslouchám...") {
+      $("voice-status").textContent = "Hlas připraven";
+    }
+  };
+} else {
+  $("voice-mic").disabled = true;
+  $("voice-status").textContent = "Hlasové zadávání tento prohlížeč nepodporuje.";
+}
 
-    <div id="admin-dashboard" style="display:none">
+// ==========================================
+// KONTROLA WORKERU
+// ==========================================
+async function checkConnection() {
+  try {
+    const r = await fetch(WORKER_URL,{cache:"no-store"});
+    const d = await r.json();
 
-        <div class="admin-card">
-            <h2>📊 Přehled systému</h2>
+    if (d.status==="online" && d.ai) {
+      $("connection-status").textContent = "● AI ONLINE";
+      $("connection-status").style.color = "#55e879";
+    } else {
+      $("connection-status").textContent = "● AI NEDOSTUPNÁ";
+      $("connection-status").style.color = "#ff7777";
+    }
+  } catch(e) {
+    $("connection-status").textContent = "● OFFLINE";
+    $("connection-status").style.color = "#ff7777";
+  }
+}
+checkConnection();
+setInterval(checkConnection,30000);
 
-            <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
-            <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
-            <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
+// ==========================================
+// ADMINISTRACE
+// ==========================================
+async function adminRequest(action,extra={}) {
+  const headers = {"Content-Type":"application/json"};
+  if (adminToken) headers.Authorization = "Bearer "+adminToken;
 
-            <button class="admin-button" id="admin-refresh">
-                🔄 Obnovit stav
-            </button>
-        </div>
+  const r = await fetch(WORKER_URL,{
+    method:"POST",
+    headers,
+    body:JSON.stringify({action,...extra})
+  });
 
-        <div class="admin-card">
-            <h2>🛠️ Správa</h2>
-            <p class="admin-muted">
-                Přihlášení funguje. Další funkce budeme postupně doplňovat.
-            </p>
-            <p>Verze: AntZadEn AI Admin 1.0</p>
-        </div>
-
-        <div class="admin-card">
-            <button class="admin-button" id="admin-logout">
-                🚪 Odhlásit se
-            </button>
-        </div>
-
-    </div>
-
-    <p class="admin-muted" style="text-align:center">
-        AntZadEn AI • Admin system
-    </p>
-
-</section>
-
-<script>
-// ===================================
-// ANTZADEN AI ADMIN PANEL
-// ===================================
-
-const adminPanel = document.getElementById("admin-panel");
-const adminLogin = document.getElementById("admin-login");
-const adminDashboard = document.getElementById("admin-dashboard");
-const adminError = document.getElementById("admin-error");
-
-let adminToken = sessionStorage.getItem("antzaden_admin_token");
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || "Chyba administrace.");
+  return d;
+}
 
 function showAdmin() {
-    document.body.classList.add("admin-mode");
-    adminPanel.style.display = "block";
-    checkAdminSession();
+  $("app").style.display = "none";
+  $("auth-screen").style.display = "none";
+  $("admin-screen").style.display = "block";
+  checkAdminSession();
 }
 
 function hideAdmin() {
-    document.body.classList.remove("admin-mode");
-    adminPanel.style.display = "none";
-}
-
-async function adminRequest(action, extra = {}) {
-    const response = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...(adminToken ? {
-                "Authorization": "Bearer " + adminToken
-            } : {})
-        },
-        body: JSON.stringify({
-            action,
-            ...extra
-        })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        throw new Error(data.error || "Chyba přihlášení.");
-    }
-
-    return data;
+  $("admin-screen").style.display = "none";
+  if (token) $("app").style.display = "block";
+  else $("auth-screen").style.display = "flex";
 }
 
 async function checkAdminSession() {
-    if (!adminToken) {
-        adminLogin.style.display = "block";
-        adminDashboard.style.display = "none";
-        return;
-    }
+  if (!adminToken) {
+    $("admin-login").style.display = "block";
+    $("admin-dashboard").style.display = "none";
+    return;
+  }
 
-    try {
-        await adminRequest("admin-check");
-
-        adminLogin.style.display = "none";
-        adminDashboard.style.display = "block";
-
-        await refreshAdminStatus();
-
-    } catch (error) {
-        adminToken = null;
-        sessionStorage.removeItem("antzaden_admin_token");
-
-        adminLogin.style.display = "block";
-        adminDashboard.style.display = "none";
-    }
+  try {
+    await adminRequest("admin-check");
+    $("admin-login").style.display = "none";
+    $("admin-dashboard").style.display = "block";
+    await refreshAdminStatus();
+  } catch(e) {
+    adminToken = "";
+    sessionStorage.removeItem("antzaden_admin_token");
+    $("admin-login").style.display = "block";
+    $("admin-dashboard").style.display = "none";
+  }
 }
 
-document.getElementById("admin-login-button").onclick =
-async function() {
-    const password = document.getElementById("admin-password").value;
-
-    if (!password) {
-        adminError.textContent = "Zadej heslo.";
-        return;
-    }
-
-    this.disabled = true;
-    adminError.textContent = "Ověřuji přihlášení...";
-
-    try {
-        const data = await adminRequest("admin-login", {
-            password
-        });
-
-        adminToken = data.token;
-
-        sessionStorage.setItem(
-            "antzaden_admin_token",
-            adminToken
-        );
-
-        document.getElementById("admin-password").value = "";
-        adminError.textContent = "";
-
-        await checkAdminSession();
-
-    } catch (error) {
-        adminError.textContent = error.message;
-    } finally {
-        this.disabled = false;
-    }
+$("admin-login-button").onclick = async () => {
+  const password = $("admin-password").value;
+  $("admin-error").textContent = "Ověřuji...";
+  try {
+    const data = await adminRequest("admin-login",{password});
+    adminToken = data.token;
+    sessionStorage.setItem("antzaden_admin_token",adminToken);
+    $("admin-password").value = "";
+    $("admin-error").textContent = "";
+    await checkAdminSession();
+  } catch(e) {
+    $("admin-error").textContent = e.message;
+  }
 };
 
 async function refreshAdminStatus() {
-    const aiStatus = document.getElementById("admin-ai-status");
-    const searchStatus = document.getElementById("admin-search-status");
-
-    aiStatus.textContent = "Kontroluji...";
-    searchStatus.textContent = "Kontroluji...";
-
-    try {
-        const response = await fetch(WORKER_URL, {
-            cache: "no-store"
-        });
-
-        const data = await response.json();
-
-        aiStatus.textContent = data.ai ? "🟢 Online" : "🔴 Offline";
-        searchStatus.textContent = data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
-
-    } catch (error) {
-        aiStatus.textContent = "🔴 Nedostupná";
-        searchStatus.textContent = "🔴 Nedostupné";
-    }
+  try {
+    const r = await fetch(WORKER_URL,{cache:"no-store"});
+    const d = await r.json();
+    $("admin-ai-status").textContent = d.ai ? "🟢 Online" : "🔴 Offline";
+    $("admin-search-status").textContent = d.search ? "🟢 Aktivní" : "🔴 Neaktivní";
+    $("admin-db-status").textContent = d.database ? "🟢 Připojena" : "🔴 Nepřipojena";
+  } catch(e) {
+    $("admin-ai-status").textContent = "🔴 Nedostupná";
+    $("admin-search-status").textContent = "🔴 Nedostupné";
+    $("admin-db-status").textContent = "🔴 Nedostupná";
+  }
 }
 
-document.getElementById("admin-refresh").onclick =
-    refreshAdminStatus;
+$("admin-refresh").onclick = refreshAdminStatus;
 
-document.getElementById("admin-logout").onclick = function() {
-    adminToken = null;
-
-    sessionStorage.removeItem("antzaden_admin_token");
-
-    adminDashboard.style.display = "none";
-    adminLogin.style.display = "block";
-
-    adminError.textContent = "Byl jsi odhlášen.";
+$("admin-logout").onclick = () => {
+  adminToken = "";
+  sessionStorage.removeItem("antzaden_admin_token");
+  $("admin-dashboard").style.display = "none";
+  $("admin-login").style.display = "block";
+  $("admin-error").textContent = "Byl jsi odhlášen.";
 };
 
-// Otevření panelu přes #admin
-function handleAdminRoute() {
-    if (location.hash === "#admin") {
-        showAdmin();
-    } else {
-        hideAdmin();
-    }
+$("admin-back").onclick = () => {
+  history.replaceState(null,"",location.pathname + location.search);
+  hideAdmin();
+};
+
+function handleRoute() {
+  if (location.hash === "#admin") showAdmin();
+  else if ($("admin-screen").style.display === "block") hideAdmin();
 }
 
-window.addEventListener("hashchange", handleAdminRoute);
-handleAdminRoute();
-</script>
+window.addEventListener("hashchange",handleRoute);
 
+// ==========================================
+// START
+// ==========================================
+console.log("AntZadEn AI Assistant načten.");
+restoreSession();
+handleRoute();
+</script>
 </body>
 </html>
