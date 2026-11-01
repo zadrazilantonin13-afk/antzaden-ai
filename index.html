@@ -455,11 +455,19 @@ const send = document.getElementById("send");
 const typing = document.getElementById("typing");
     
 // ==========================================
-// SKUTEČNÁ KONTROLA PŘIPOJENÍ
+// SKUTEČNÁ KONTROLA PŘIPOJENÍ AI
 // ==========================================
 
 async function checkConnection() {
     const status = document.getElementById("connection-status");
+
+    if (!status) {
+        console.error("Chybí element connection-status!");
+        return;
+    }
+
+    status.textContent = "● KONTROLUJI...";
+    status.style.color = "#f0c85a";
 
     try {
         const response = await fetch(WORKER_URL, {
@@ -467,9 +475,13 @@ async function checkConnection() {
             cache: "no-store"
         });
 
+        if (!response.ok) {
+            throw new Error("Server odpovídá chybou " + response.status);
+        }
+
         const data = await response.json();
 
-        if (response.ok && data.status === "online" && data.ai) {
+        if (data.status === "online" && data.ai === true) {
             status.textContent = "● AI ONLINE";
             status.style.color = "#55e879";
         } else {
@@ -480,16 +492,12 @@ async function checkConnection() {
     } catch (error) {
         status.textContent = "● OFFLINE";
         status.style.color = "#ff7777";
+        console.error("Kontrola AI selhala:", error);
     }
 }
 
 checkConnection();
 setInterval(checkConnection, 30000);
-let busy = false;
-let conversation = [];
-let voiceEnabled = false;
-let recognition = null;
-let listening = false;
 
 // ==========================================
 // POSOUVÁNÍ CHATU
