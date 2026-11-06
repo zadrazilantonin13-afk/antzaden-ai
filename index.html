@@ -862,79 +862,409 @@ document.querySelectorAll(".quick button").forEach(button => {
   };
 });
 
+
 // ==========================================
-// HLASOVÉ OVLÁDÁNÍ
+// ANTZADEN AI – GEMINI LIVE VOICE
 // ==========================================
 
-function speakAnswer(text) {
-  if (!voiceEnabled || !window.speechSynthesis) return;
+let liveSocket = null;
+let liveStream = null;
+let liveAudioContext = null;
+let liveProcessor = null;
+let liveSource = null;
+let liveActive = false;
+let liveReady = false;
+let liveOutputEnabled = true;
+let liveNextPlayTime = 0;
+let liveSources = [];
+let liveUserTranscript = "";
+let liveAssistantTranscript = "";
 
-  window.speechSynthesis.cancel();
+const liveMic = $('voice-mic');
+const liveToggle = $('voice-toggle');
+const liveStatus = $('voice-status');
 
-  const clean = String(text)
-    .replace(/```[\s\S]*?```/g,"Kód")
-    .replace(/[#*`_]/g,"")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
-
-  const utterance = new SpeechSynthesisUtterance(clean);
-  utterance.lang = "cs-CZ";
-  utterance.rate = 1;
-
-  window.speechSynthesis.speak(utterance);
+function liveStatusText(text) {
+    liveStatus.textContent = text;
 }
 
-$("voice-toggle").onclick = () => {
-  voiceEnabled = !voiceEnabled;
+function liveBase64(bytes) {
+    let binary = "";
+    const chunk = 0x8000;
 
-  $("voice-toggle").textContent = voiceEnabled
-    ? "🔊 Hlas: zapnutý"
-    : "🔊 Hlas: vypnutý";
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(
+            ...bytes.subarray(i, i + chunk)
+        );
+    }
 
-  if (!voiceEnabled && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
-};
+    return btoa(binary);
+}
 
-const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function liveResample(inputData, fromRate, toRate) {
+    if (fromRate === toRate) return inputData;
 
-if (Recognition) {
-  recognition = new Recognition();
-  recognition.lang = "cs-CZ";
-  recognition.continuous = false;
-  recognition.interimResults = false;
+    const ratio = fromRate / toRate;
+    const length = Math.floor(inputData.length / ratio);
+    const output = new Float32Array(length);
 
-  $("voice-mic").onclick = () => {
-    if (listening) return;
+    for (let i = 0; i < length; i++) {
+        const start = Math.floor(i * ratio);
+        const end = Math.min(
+            Math.floor((i + 1) * ratio),
+            inputData.length
+        );
+
+        let sum = 0;
+        for (let j = start; j < end; j++) {
+            sum += inputData[j];
+        }
+
+        output[i] = sum / Math.max(1, end - start);
+    }
+
+    return output;
+}
+
+function liveStopPlayback() {
+    liveSources.forEach(source => {
+        try {
+            source.stop();
+        } catch {}
+    });
+
+    liveSources = [];
+
+    if (liveAudioContext) {
+        liveNextPlayTime = liveAudioContext.currentTime;
+    }
+}
+
+function livePlayAudio(base64) {
+    if (!liveOutputEnabled || !liveAudioContext) return;
+
+    const binary = atob(base64);
+    const samples = new Int16Array(binary.length / 2);
+
+    for (let i = 0; i < samples.length; i++) {
+        const lo = binary.charCodeAt(i * 2);
+        const hi = binary.charCodeAt(i * 2 + 1);
+        let value = (hi << 8) | lo;
+
+        if (value >= 32768) value -= 65536;
+
+        samples[i] = value;
+    }
+
+    const buffer = liveAudioContext.createBuffer(
+        1,
+        samples.length,
+        24000
+    );
+
+    const channel = buffer.getChannelData(0);
+
+    for (let i = 0; i < samples.length; i++) {
+        channel[i] = samples[i] / 32768;
+    }
+
+    const source = liveAudioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(liveAudioContext.destination);
+
+    const startAt = Math.max(
+        liveAudioContext.currentTime,
+        liveNextPlayTime
+    );
+
+    source.start(startAt);
+    liveNextPlayTime = startAt + buffer.duration;
+
+    liveSources.push(source);
+
+    source.onended = () => {
+        liveSources = liveSources.filter(x => x !== source);
+    };
+}
+
+function liveSendAudio(floatData) {
+    if (
+        !liveSocket ||
+        liveSocket.readyState !== WebSocket.OPEN ||
+        !liveReady
+    ) return;
+
+    const resampled = liveResample(
+        floatData,
+        liveAudioContext.sampleRate,
+        16000
+    );
+
+    const pcm = new Int16Array(resampled.length);
+
+    for (let i = 0; i < resampled.length; i++) {
+        const sample = Math.max(-1, Math.min(1, resampled[i]));
+        pcm[i] = sample < 0
+            ? sample * 32768
+            : sample * 32767;
+    }
+
+    liveSocket.send(JSON.stringify({
+        realtimeInput: {
+            audio: {
+                data: liveBase64(
+                    new Uint8Array(
+                        pcm.buffer,
+                        pcm.byteOffset,
+                        pcm.byteLength
+                    )
+                ),
+                mimeType: "audio/pcm;rate=16000"
+            }
+        }
+    }));
+}
+
+async function liveStartMicrophone() {
+    liveStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+        }
+    });
+
+    liveAudioContext = new AudioContext();
+
+    await liveAudioContext.resume();
+
+    liveSource = liveAudioContext.createMediaStreamSource(
+        liveStream
+    );
+
+    liveProcessor = liveAudioContext.createScriptProcessor(
+        4096,
+        1,
+        1
+    );
+
+    liveProcessor.onaudioprocess = event => {
+        if (!liveActive || !liveReady) return;
+
+        const data = event.inputBuffer.getChannelData(0);
+        liveSendAudio(new Float32Array(data));
+    };
+
+    liveSource.connect(liveProcessor);
+
+    // Tichý výstup zachovává zpracování mikrofonu.
+    const mute = liveAudioContext.createGain();
+    mute.gain.value = 0;
+
+    liveProcessor.connect(mute);
+    mute.connect(liveAudioContext.destination);
+}
+
+async function startLiveVoice() {
+    if (liveActive) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        liveStatusText("Mikrofon vyžaduje HTTPS.");
+        return;
+    }
+
+    liveActive = true;
+    liveReady = false;
+    liveUserTranscript = "";
+    liveAssistantTranscript = "";
+
+    liveMic.textContent = "⏹ Ukončit LIVE";
+    liveStatusText("Připojuji AntZadEn LIVE…");
 
     try {
-      recognition.start();
-      listening = true;
-      $("voice-status").textContent = "🎤 Poslouchám...";
-    } catch {
-      $("voice-status").textContent = "Mikrofon se nepodařilo spustit.";
+        const tokenData = await api("live-token");
+
+        if (!tokenData.token) {
+            throw new Error("Server nevydal hlasový token.");
+        }
+
+        const url =
+            "wss://generativelanguage.googleapis.com/ws/" +
+            "google.ai.generativelanguage.v1beta.GenerativeService." +
+            "BidiGenerateContentConstrained?access_token=" +
+            encodeURIComponent(tokenData.token);
+
+        liveSocket = new WebSocket(url);
+
+        liveSocket.onopen = async () => {
+            liveSocket.send(JSON.stringify({
+                setup: {
+                    model: "models/gemini-3.1-flash-live-preview",
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: {
+                                    voiceName: "Charon"
+                                }
+                            }
+                        }
+                    },
+                    systemInstruction: {
+                        parts: [{
+                            text:
+                                "Jsi AntZadEn AI Assistant. " +
+                                "Mluv přirozeně a přátelsky česky. " +
+                                "Odpovídej jako přirozený hlasový asistent. " +
+                                "Mluv jasně a srozumitelně."
+                        }]
+                    },
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {}
+                }
+            }));
+        };
+
+        liveSocket.onmessage = async event => {
+            const data = JSON.parse(event.data);
+
+            if (data.setupComplete) {
+                await liveStartMicrophone();
+
+                liveReady = true;
+                liveStatusText("🟢 LIVE – můžeš mluvit");
+                return;
+            }
+
+            const content = data.serverContent;
+
+            if (!content) return;
+
+            if (content.inputTranscription?.text) {
+                liveUserTranscript += content.inputTranscription.text;
+            }
+
+            if (content.outputTranscription?.text) {
+                liveAssistantTranscript += content.outputTranscription.text;
+            }
+
+            if (content.interrupted) {
+                liveStopPlayback();
+            }
+
+            const parts = content.modelTurn?.parts || [];
+
+            for (const part of parts) {
+                if (
+                    part.inlineData?.data &&
+                    part.inlineData.mimeType?.startsWith("audio/")
+                ) {
+                    livePlayAudio(part.inlineData.data);
+                }
+            }
+
+            if (content.turnComplete) {
+                const userText = liveUserTranscript.trim();
+                const assistantText = liveAssistantTranscript.trim();
+
+                if (userText && currentChatId) {
+                    saveLocalMessage("user", userText).catch(console.error);
+                }
+
+                if (assistantText && currentChatId) {
+                    saveLocalMessage("assistant", assistantText).catch(console.error);
+                }
+
+                if (userText) addMessage(userText, true);
+                if (assistantText) addMessage(assistantText);
+
+                liveUserTranscript = "";
+                liveAssistantTranscript = "";
+
+                liveStatusText("🟢 LIVE – poslouchám");
+            }
+        };
+
+        liveSocket.onerror = () => {
+            liveStatusText("Chyba LIVE spojení.");
+        };
+
+        liveSocket.onclose = () => {
+            if (liveActive) {
+                stopLiveVoice();
+                liveStatusText("LIVE spojení bylo ukončeno.");
+            }
+        };
+
+    } catch (error) {
+        console.error("AntZadEn LIVE:", error);
+        liveStatusText("Chyba: " + error.message);
+        await stopLiveVoice();
     }
-  };
-
-  recognition.onresult = event => {
-    $("input").value = event.results[0][0].transcript;
-    $("voice-status").textContent = "Rozpoznáno.";
-    $("form").requestSubmit();
-  };
-
-  recognition.onerror = event => {
-    $("voice-status").textContent = "Chyba mikrofonu: " + event.error;
-  };
-
-  recognition.onend = () => {
-    listening = false;
-    if ($("voice-status").textContent === "🎤 Poslouchám...") {
-      $("voice-status").textContent = "Hlas připraven";
-    }
-  };
-} else {
-  $("voice-mic").disabled = true;
-  $("voice-status").textContent = "Hlasové zadávání tento prohlížeč nepodporuje.";
 }
+
+async function stopLiveVoice() {
+    liveActive = false;
+    liveReady = false;
+
+    liveStopPlayback();
+
+    if (liveSocket) {
+        const socket = liveSocket;
+        liveSocket = null;
+
+        if (
+            socket.readyState === WebSocket.OPEN ||
+            socket.readyState === WebSocket.CONNECTING
+        ) {
+            socket.close();
+        }
+    }
+
+    if (liveProcessor) {
+        liveProcessor.disconnect();
+        liveProcessor.onaudioprocess = null;
+        liveProcessor = null;
+    }
+
+    if (liveSource) {
+        liveSource.disconnect();
+        liveSource = null;
+    }
+
+    if (liveStream) {
+        liveStream.getTracks().forEach(track => track.stop());
+        liveStream = null;
+    }
+
+    if (liveAudioContext) {
+        await liveAudioContext.close().catch(() => {});
+        liveAudioContext = null;
+    }
+
+    liveMic.textContent = "🎤 Spustit LIVE";
+}
+
+liveMic.onclick = () => {
+    if (liveActive) {
+        stopLiveVoice();
+        liveStatusText("LIVE vypnuto.");
+    } else {
+        startLiveVoice();
+    }
+};
+
+liveToggle.onclick = () => {
+    liveOutputEnabled = !liveOutputEnabled;
+
+    liveToggle.textContent = liveOutputEnabled
+        ? "🔊 Hlas: zapnutý"
+        : "🔇 Hlas: vypnutý";
+
+    if (!liveOutputEnabled) {
+        liveStopPlayback();
+    }
+};
 
 // ==========================================
 // KONTROLA SERVERU
