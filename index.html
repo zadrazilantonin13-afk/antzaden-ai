@@ -1,212 +1,11 @@
-
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090d0b">
-<meta name="description" content="AntZadEn AI Assistant – bez registrace a přihlášení.">
-<title>AntZadEn AI Assistant</title>
-
-<style>
-*{box-sizing:border-box}
-:root{--bg:#090d0b;--panel:#101713;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
-body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;overflow:hidden}
-button,input{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-#app{height:100dvh;display:none}
-header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
-.brand h1{font-size:17px;margin:0}
-.sub{font-size:12px;color:var(--muted);margin-top:5px}
-.status{font-size:11px;color:var(--green)}
-.header-right{display:flex;align-items:center;gap:12px}
-.small-button{background:#17231a;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 12px;font-size:12px}
-#layout{height:calc(100dvh - 72px);display:flex;min-height:0}
-#sidebar{width:255px;flex-shrink:0;background:#0c120e;border-right:1px solid #26372c;display:flex;flex-direction:column;padding:14px;min-height:0}
-.new-chat{background:#183d24;border:1px solid #3d8a50;color:#a9f5b9;border-radius:11px;padding:12px;text-align:left;font-weight:bold}
-.sidebar-title{font-size:10px;color:#748579;letter-spacing:1.5px;margin:22px 5px 10px}
-#chat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}
-.chat-item{display:flex;align-items:center;gap:3px;min-width:0}
-.chat-select{flex:1;min-width:0;text-align:left;background:transparent;border:1px solid transparent;color:#bdcbbf;border-radius:9px;padding:10px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chat-select:hover,.chat-select.active{background:#18241b;border-color:#304b35;color:#fff}
-.chat-rename,.chat-delete{background:transparent;border:0;color:#78887c;padding:7px;font-size:15px;flex-shrink:0}
-.chat-rename:hover{color:var(--green)}
-.chat-delete:hover{color:#ff7777}
-.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid #26372c}
-#main-area{flex:1;min-width:0;display:flex;flex-direction:column}
-.quick{display:flex;gap:8px;padding:11px 15px;background:#0c120e;overflow-x:auto;flex-shrink:0}
-.quick button{white-space:nowrap;background:#151e18;color:#c6d5ca;border:1px solid #304235;border-radius:22px;padding:9px 14px;font-size:12px}
-.quick button:hover{border-color:var(--green);color:white}
-main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:15px 16px 0}
-#chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;padding:5px 3px 20px;scroll-behavior:smooth}
-.message{max-width:85%;padding:13px 16px;border-radius:17px;line-height:1.6;font-size:14px;overflow-wrap:anywhere;animation:appear .2s ease}
-@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.bot{align-self:flex-start;background:#141e17;border:1px solid #2a3b2e;border-bottom-left-radius:5px}
-.user{align-self:flex-end;background:#176b35;border:1px solid #2c9b4b;border-bottom-right-radius:5px;white-space:pre-wrap}
-.botname{font-size:10px;color:var(--green);font-weight:bold;letter-spacing:1px;margin-bottom:7px}
-.markdown{overflow-wrap:anywhere}
-.markdown strong{color:#75f596}
-.markdown h1,.markdown h2,.markdown h3{color:#85f5a0;line-height:1.3}
-.markdown h1{font-size:21px}
-.markdown h2{font-size:18px}
-.markdown h3{font-size:16px}
-.markdown a{color:#78f49a}
-.markdown code{background:#202d23;padding:3px 6px;border-radius:5px;color:#8affae;font-family:Consolas,monospace}
-.markdown pre{background:#080e0a;border:1px solid #2a3b2e;padding:13px;border-radius:10px;overflow-x:auto;white-space:pre}
-.markdown pre code{background:none;padding:0}
-.markdown blockquote{border-left:3px solid var(--green);margin:9px 0;padding:4px 12px;color:#b7c9bc}
-.markdown li{margin:5px 0}
-#typing{display:none;align-self:flex-start;align-items:center;gap:10px;padding:12px 15px;background:#111a14;border:1px solid #2a3b2e;border-radius:16px;color:var(--muted);font-size:12px}
-.spinner{width:15px;height:15px;border:2px solid #34513b;border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.bottom{padding:13px 0 18px;border-top:1px solid #1b2a20;flex-shrink:0}
-#form{display:flex;gap:10px;align-items:center;background:#111914;border:1px solid #304235;border-radius:17px;padding:8px 9px 8px 16px}
-#input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
-#input::placeholder{color:#718077}
-#send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px}
-.voicebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
-.voicebar button{background:#14251a;border:1px solid #35543c;color:#a6f5b8;border-radius:10px;padding:9px 13px}
-#voice-status{font-size:11px;color:var(--muted)}
-.hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
-#admin-screen{display:none;min-height:100dvh;overflow:auto;padding:25px}
-.admin-wrap{max-width:750px;margin:20px auto}
-.admin-card{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:22px;margin:14px 0}
-.admin-card h2{color:#75f596;margin-top:0}
-.admin-input{width:100%;padding:13px;margin:10px 0;background:#090d0b;border:1px solid #304235;border-radius:10px;color:white}
-.admin-button{padding:12px 17px;border:0;border-radius:10px;background:var(--green);color:#061109;font-weight:bold;margin:5px}
-.admin-muted{color:var(--muted);font-size:13px}
-.admin-error{color:#ff7777;font-size:13px}
-.admin-success{color:var(--green)}
-
-@media(max-width:700px){
-header{height:64px;padding:9px 12px}
-.brand h1{font-size:14px}
-.brand .logo{width:38px;height:38px}
-#layout{height:calc(100dvh - 64px)}
-#sidebar{width:190px;padding:9px}
-main{padding:10px 10px 0}
-.message{max-width:94%;font-size:13px}
-}
-@media(max-width:480px){
-#sidebar{width:145px;padding:7px}
-.chat-select{font-size:11px;padding:8px}
-.chat-rename,.chat-delete{padding:5px;font-size:13px}
-.new-chat{font-size:11px;padding:10px}
-.sidebar-title{font-size:9px}
-.header-right{gap:5px}
-.small-button{padding:8px;font-size:10px}
-}
-</style>
-
-<link rel="icon" type="image/png" href="./favicon.png?v=2">
-<link rel="apple-touch-icon" href="./favicon.png">
-  
-</head>
-
-<body>
-
-<div id="app">
-<header>
-  <div class="brand">
-    <div class="logo">A</div>
-    <div>
-      <h1>AntZadEn AI Assistant</h1>
-      <div class="sub">Tvůj osobní AI asistent</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <span class="status" id="connection-status">● PŘIPOJUJI...</span>
-    <button class="small-button" id="admin-open">⚙ Admin</button>
-  </div>
-</header>
-
-<div id="layout">
-<aside id="sidebar">
-  <button class="new-chat" id="new-chat">＋ Nový chat</button>
-  <div class="sidebar-title">TVÉ KONVERZACE</div>
-  <div id="chat-list"></div>
-  <div class="sidebar-bottom">
-    <button class="small-button" id="refresh-chats">↻ Obnovit chaty</button>
-  </div>
-</aside>
-
-<div id="main-area">
-  <div class="quick">
-    <button type="button" data-question="Co je to AntZadEn?">💡 Co je AntZadEn?</button>
-    <button type="button" data-question="Napiš básničku o AntZadEn.">✍️ Básnička</button>
-    <button type="button" data-question="Kolik je hodin?">🕒 Kolik je hodin?</button>
-    <button type="button" data-question="Jaké je počasí u mě?">🌤️ Počasí u mě</button>
-  </div>
-
-  <main>
-    <section id="chat" aria-live="polite">
-      <div id="typing"><span class="spinner"></span>AntZadEn AI přemýšlí…</div>
-    </section>
-
-    <div class="bottom">
-      <form id="form">
-        <input id="input" type="text" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
-        <button id="send" type="submit">➤</button>
-      </form>
-
-      <div class="voicebar">
-        <button type="button" id="voice-mic">🎤 Mluvit</button>
-        <button type="button" id="voice-toggle">🔊 Hlas: vypnutý</button>
-        <span id="voice-status">Hlas připraven</span>
-      </div>
-
-      <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim</div>
-    </div>
-  </main>
-</div>
-</div>
-</div>
-
-<section id="admin-screen">
-<div class="admin-wrap">
-  <div class="admin-card">
-    <div style="font-size:12px;color:#55e879;letter-spacing:2px">ANTZADEN AI</div>
-    <h1>⚙️ Administrace</h1>
-    <p class="admin-muted">Zabezpečený administrační panel</p>
-    <button class="small-button" id="admin-back">← Zpět na web</button>
-  </div>
-
-  <div class="admin-card" id="admin-login">
-    <h2>🔐 Přihlášení administrátora</h2>
-    <input id="admin-password" class="admin-input" type="password" placeholder="Administrační heslo">
-    <button class="admin-button" id="admin-login-button">Přihlásit se</button>
-    <p id="admin-error" class="admin-error"></p>
-  </div>
-
-  <div id="admin-dashboard" style="display:none">
-    <div class="admin-card">
-      <h2>📊 Přehled systému</h2>
-      <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
-      <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
-      <p>Databáze: <strong id="admin-db-status">Kontroluji...</strong></p>
-      <p>Anonymní režim: <strong class="admin-success">Aktivní</strong></p>
-      <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
-      <button class="admin-button" id="admin-refresh">🔄 Obnovit stav</button>
-    </div>
-
-    <div class="admin-card">
-      <h2>🛠️ Systém</h2>
-      <p class="admin-muted">AntZadEn AI Assistant – administrace systému.</p>
-      <p>Verze: AntZadEn AI 3.0</p>
-    </div>
-
-    <div class="admin-card">
-      <button class="admin-button" id="admin-logout">🚪 Odhlásit administrátora</button>
-    </div>
-  </div>
-</div>
-</section>
-
 <script>
 "use strict";
+
+/* ==========================================
+   ANTZADEN AI ASSISTANT – OPRAVENÁ VERZE
+   Zachovává API, chaty, počasí, administraci
+   a Gemini LIVE hlas.
+========================================== */
 
 const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
 const $ = id => document.getElementById(id);
@@ -214,28 +13,25 @@ const $ = id => document.getElementById(id);
 let token = localStorage.getItem("antzaden_guest_token") || "";
 let currentChatId = null;
 let busy = false;
-let voiceEnabled = false;
-let recognition = null;
-let listening = false;
 let adminToken = sessionStorage.getItem("antzaden_admin_token") || "";
 
-// ==========================================
-// API
-// ==========================================
+/* ==========================================
+   API
+========================================== */
 
 async function api(action, extra = {}, useToken = true) {
-  const headers = {"Content-Type":"application/json"};
+  const headers = { "Content-Type": "application/json" };
 
   if (useToken && token) {
     headers.Authorization = "Bearer " + token;
   }
 
   const response = await fetch(WORKER_URL, {
-    method:"POST",
+    method: "POST",
     headers,
-    body:JSON.stringify({
+    body: JSON.stringify({
       action,
-      ...(useToken && token ? {token} : {}),
+      ...(useToken && token ? { token } : {}),
       ...extra
     })
   });
@@ -246,25 +42,29 @@ async function api(action, extra = {}, useToken = true) {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error("Server vrátil neplatnou odpověď: " + raw.slice(0,180));
+    throw new Error("Server vrátil neplatnou odpověď: " + raw.slice(0, 180));
   }
 
   if (!response.ok) {
     throw new Error(data.error || "Chyba serveru " + response.status);
   }
 
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
   return data;
 }
 
-// ==========================================
-// ANONYMNÍ PŘÍSTUP
-// ==========================================
+/* ==========================================
+   ANONYMNÍ PŘÍSTUP
+========================================== */
 
 async function initializeGuest() {
   $("connection-status").textContent = "● PŘIPOJUJI...";
 
   try {
-    const data = await api("guest-init", {}, true);
+    const data = await api("guest-init", {}, false);
 
     if (!data.token) {
       throw new Error("Server nevydal anonymní token.");
@@ -279,10 +79,10 @@ async function initializeGuest() {
     await checkConnection();
 
   } catch (error) {
+    $("app").style.display = "block";
     $("connection-status").textContent = "● CHYBA";
     $("connection-status").style.color = "#ff7777";
 
-    $("app").style.display = "block";
     $("chat-list").textContent = "Nepodařilo se připojit.";
     clearChatView();
     addMessage(
@@ -290,21 +90,21 @@ async function initializeGuest() {
       false
     );
 
-    console.error(error);
+    console.error("Inicializace:", error);
   }
 }
 
-// ==========================================
-// MARKDOWN
-// ==========================================
+/* ==========================================
+   MARKDOWN
+========================================== */
 
 function escapeHTML(text) {
   return String(text)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function inlineMarkdown(text) {
@@ -316,9 +116,9 @@ function inlineMarkdown(text) {
   );
 
   return html
-    .replace(/`([^`]+)`/g,"<code>$1</code>")
-    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g,"<em>$1</em>");
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
 }
 
 function renderMarkdown(text) {
@@ -329,19 +129,19 @@ function renderMarkdown(text) {
   let code = false;
   let codeLines = [];
 
-  const flush = () => {
+  function flush() {
     if (paragraph.length) {
       html += "<p>" + paragraph.map(inlineMarkdown).join("<br>") + "</p>";
       paragraph = [];
     }
-  };
+  }
 
-  const closeList = () => {
+  function closeList() {
     if (list) {
       html += list === "ul" ? "</ul>" : "</ol>";
       list = "";
     }
-  };
+  }
 
   for (const line of lines) {
     if (line.trim().startsWith("```")) {
@@ -349,7 +149,9 @@ function renderMarkdown(text) {
       closeList();
 
       if (code) {
-        html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+        html += "<pre><code>" +
+          escapeHTML(codeLines.join("\n")) +
+          "</code></pre>";
         codeLines = [];
         code = false;
       } else {
@@ -410,7 +212,9 @@ function renderMarkdown(text) {
   }
 
   if (code) {
-    html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+    html += "<pre><code>" +
+      escapeHTML(codeLines.join("\n")) +
+      "</code></pre>";
   }
 
   flush();
@@ -419,16 +223,22 @@ function renderMarkdown(text) {
   return html;
 }
 
+/* ==========================================
+   ZPRÁVY A CHATOVACÍ OKNO
+========================================== */
+
 function clearChatView() {
   $("chat").innerHTML = "";
 
   const indicator = document.createElement("div");
   indicator.id = "typing";
-  indicator.innerHTML = '<span class="spinner"></span>AntZadEn AI přemýšlí…';
+  indicator.innerHTML =
+    '<span class="spinner"></span>AntZadEn AI přemýšlí…';
+
   $("chat").appendChild(indicator);
 }
 
-function addMessage(text, isUser) {
+function addMessage(text, isUser = false) {
   const box = document.createElement("div");
   box.className = "message " + (isUser ? "user" : "bot");
 
@@ -449,9 +259,15 @@ function addMessage(text, isUser) {
   }
 
   box.appendChild(content);
-  $("chat").insertBefore(box, $("typing"));
-  scrollDown();
 
+  const typing = $("typing");
+  if (typing && typing.parentNode === $("chat")) {
+    $("chat").insertBefore(box, typing);
+  } else {
+    $("chat").appendChild(box);
+  }
+
+  scrollDown();
   return content;
 }
 
@@ -473,21 +289,21 @@ async function typeAnswer(element, text) {
   scrollDown();
 }
 
-// ==========================================
-// CHATY
-// ==========================================
+/* ==========================================
+   CHATY – VYTVOŘENÍ, NAČTENÍ, MAZÁNÍ
+========================================== */
 
 function makeChatRow(item) {
   const row = document.createElement("div");
   row.className = "chat-item";
 
   const button = document.createElement("button");
-  button.className = "chat-select" + (item.id === currentChatId ? " active" : "");
+  button.className =
+    "chat-select" + (item.id === currentChatId ? " active" : "");
   button.textContent = item.title || "Nový chat";
   button.title = item.title || "Nový chat";
   button.onclick = () => openChat(item.id);
 
-  // PŘEJMENOVÁNÍ CHATU
   const rename = document.createElement("button");
   rename.className = "chat-rename";
   rename.textContent = "✎";
@@ -510,8 +326,8 @@ function makeChatRow(item) {
 
     try {
       await api("chat-rename", {
-        chatId:item.id,
-        title:title.slice(0,100)
+        chatId: item.id,
+        title: title.slice(0, 100)
       });
 
       await loadChatsListOnly();
@@ -520,7 +336,6 @@ function makeChatRow(item) {
     }
   };
 
-  // SMAZÁNÍ CHATU
   const del = document.createElement("button");
   del.className = "chat-delete";
   del.textContent = "×";
@@ -530,7 +345,7 @@ function makeChatRow(item) {
     if (!confirm("Opravdu chceš tento chat smazat?")) return;
 
     try {
-      await api("chat-delete", {chatId:item.id});
+      await api("chat-delete", { chatId: item.id });
 
       if (currentChatId === item.id) {
         currentChatId = null;
@@ -538,7 +353,7 @@ function makeChatRow(item) {
 
       await loadChats();
     } catch (error) {
-      alert(error.message);
+      alert("Chat se nepodařilo smazat: " + error.message);
     }
   };
 
@@ -577,12 +392,16 @@ async function loadChats() {
     });
 
     if (data.chats?.length) {
-      if (!currentChatId || !data.chats.some(item => item.id === currentChatId)) {
+      if (
+        !currentChatId ||
+        !data.chats.some(item => item.id === currentChatId)
+      ) {
         await openChat(data.chats[0].id);
       }
     } else {
       await createChat();
     }
+
   } catch (error) {
     list.textContent = "Chyba: " + error.message;
     clearChatView();
@@ -593,6 +412,11 @@ async function loadChats() {
 async function createChat() {
   try {
     const data = await api("chat-create");
+
+    if (!data.chat?.id) {
+      throw new Error("Server nevrátil ID nového chatu.");
+    }
+
     currentChatId = data.chat.id;
 
     clearChatView();
@@ -602,6 +426,7 @@ async function createChat() {
     );
 
     await loadChatsListOnly();
+
   } catch (error) {
     clearChatView();
     addMessage("Nepodařilo se vytvořit chat: " + error.message, false);
@@ -613,7 +438,7 @@ async function openChat(chatId) {
   clearChatView();
 
   try {
-    const data = await api("chat-get", {chatId});
+    const data = await api("chat-get", { chatId });
     clearChatView();
 
     if (!data.messages?.length) {
@@ -629,6 +454,7 @@ async function openChat(chatId) {
 
     await loadChatsListOnly();
     scrollDown();
+
   } catch (error) {
     addMessage("Nepodařilo se načíst chat: " + error.message, false);
   }
@@ -637,19 +463,50 @@ async function openChat(chatId) {
 $("new-chat").onclick = createChat;
 $("refresh-chats").onclick = loadChats;
 
-// ==========================================
-// LOKÁLNÍ ODPOVĚDI A POČASÍ
-// ==========================================
+/* ==========================================
+   UKLÁDÁNÍ ZPRÁV Z LIVE REŽIMU
+   Tato funkce v původním kódu chyběla.
+========================================== */
+
+async function saveLocalMessage(role, content) {
+  if (!currentChatId || !content?.trim()) return;
+
+  await api("chat-save-message", {
+    chatId: currentChatId,
+    role,
+    content: content.trim()
+  });
+
+  await loadChatsListOnly();
+}
+
+/* ==========================================
+   POČASÍ A LOKÁLNÍ ODPOVĚDI
+========================================== */
 
 function weatherDescription(code) {
   return ({
-    0:"jasno",1:"převážně jasno",2:"polojasno",3:"zataženo",
-    45:"mlha",48:"mrznoucí mlha",51:"slabé mrholení",
-    53:"mrholení",55:"silné mrholení",61:"slabý déšť",
-    63:"déšť",65:"silný déšť",71:"slabé sněžení",
-    73:"sněžení",75:"silné sněžení",80:"přeháňky",
-    81:"silnější přeháňky",82:"prudké přeháňky",
-    95:"bouřky",96:"bouřky s kroupami",99:"silné bouřky"
+    0: "jasno",
+    1: "převážně jasno",
+    2: "polojasno",
+    3: "zataženo",
+    45: "mlha",
+    48: "mrznoucí mlha",
+    51: "slabé mrholení",
+    53: "mrholení",
+    55: "silné mrholení",
+    61: "slabý déšť",
+    63: "déšť",
+    65: "silný déšť",
+    71: "slabé sněžení",
+    73: "sněžení",
+    75: "silné sněžení",
+    80: "přeháňky",
+    81: "silnější přeháňky",
+    82: "prudké přeháňky",
+    95: "bouřky",
+    96: "bouřky s kroupami",
+    99: "silné bouřky"
   })[code] || "proměnlivé počasí";
 }
 
@@ -658,33 +515,37 @@ async function getDeviceLocation() {
     try {
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout:6500,
-          maximumAge:300000
+          timeout: 6500,
+          maximumAge: 300000
         });
       });
 
       return {
-        latitude:position.coords.latitude,
-        longitude:position.coords.longitude,
-        name:"Poloha zařízení"
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        name: "Poloha zařízení"
       };
     } catch (error) {
-      console.warn("GPS nedostupná", error);
+      console.warn("GPS nedostupná:", error);
     }
   }
 
   try {
     const response = await fetch("https://ipapi.co/json/");
+    if (!response.ok) throw new Error("Poloha IP není dostupná.");
+
     const data = await response.json();
 
     if (data.latitude != null && data.longitude != null) {
       return {
-        latitude:data.latitude,
-        longitude:data.longitude,
-        name:data.city || "Přibližná poloha"
+        latitude: data.latitude,
+        longitude: data.longitude,
+        name: data.city || "Přibližná poloha"
       };
     }
-  } catch (error) {}
+  } catch (error) {
+    console.warn(error);
+  }
 
   const city = prompt("Poloha není dostupná. Zadej město:");
   if (!city) throw new Error("Nebyla zadána poloha.");
@@ -697,28 +558,32 @@ async function getDeviceLocation() {
 
   const data = await response.json();
 
-  if (!data.results?.length) throw new Error("Město nebylo nalezeno.");
+  if (!data.results?.length) {
+    throw new Error("Město nebylo nalezeno.");
+  }
 
   return {
-    latitude:data.results[0].latitude,
-    longitude:data.results[0].longitude,
-    name:data.results[0].name
+    latitude: data.results[0].latitude,
+    longitude: data.results[0].longitude,
+    name: data.results[0].name
   };
 }
 
 async function getWeather(query) {
   const location = await getDeviceLocation();
   const date = new Date();
-  date.setHours(0,0,0,0);
+  date.setHours(0, 0, 0, 0);
 
-  if (query.toLowerCase().includes("pozítří")) {
+  const q = query.toLowerCase();
+
+  if (q.includes("pozítří")) {
     date.setDate(date.getDate() + 2);
-  } else if (query.toLowerCase().includes("zítra")) {
+  } else if (q.includes("zítra")) {
     date.setDate(date.getDate() + 1);
   }
 
   const days = Math.round(
-    (date - new Date(new Date().setHours(0,0,0,0))) / 86400000
+    (date - new Date(new Date().setHours(0, 0, 0, 0))) / 86400000
   );
 
   if (days < 0 || days > 15) {
@@ -727,22 +592,24 @@ async function getWeather(query) {
 
   const iso =
     date.getFullYear() + "-" +
-    String(date.getMonth() + 1).padStart(2,"0") + "-" +
-    String(date.getDate()).padStart(2,"0");
+    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+    String(date.getDate()).padStart(2, "0");
 
   const params = new URLSearchParams({
-    latitude:location.latitude,
-    longitude:location.longitude,
-    daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-    timezone:"auto",
-    forecast_days:"16"
+    latitude: location.latitude,
+    longitude: location.longitude,
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+    timezone: "auto",
+    forecast_days: "16"
   });
 
   const response = await fetch(
     "https://api.open-meteo.com/v1/forecast?" + params
   );
 
-  if (!response.ok) throw new Error("Počasí se nepodařilo načíst.");
+  if (!response.ok) {
+    throw new Error("Počasí se nepodařilo načíst.");
+  }
 
   const data = await response.json();
   const index = data.daily.time.indexOf(iso);
@@ -752,7 +619,11 @@ async function getWeather(query) {
   return `## 🌤️ Počasí
 
 **📍 Místo:** ${location.name}
-**📅 ${date.toLocaleDateString("cs-CZ",{weekday:"long",day:"numeric",month:"long"})}**
+**📅 ${date.toLocaleDateString("cs-CZ", {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
+  })}**
 
 - 🌡️ Teplota: **${data.daily.temperature_2m_min[index]} až ${data.daily.temperature_2m_max[index]} °C**
 - ☁️ Počasí: **${weatherDescription(data.daily.weather_code[index])}**
@@ -765,22 +636,60 @@ async function getLocalAnswer(query) {
   const q = query.toLowerCase();
 
   if (q.includes("kolik je hodin")) {
-    return "Právě je **" + new Date().toLocaleTimeString("cs-CZ", {
-      hour:"2-digit",
-      minute:"2-digit"
-    }) + "** podle času tvého zařízení.";
+    return "Právě je **" +
+      new Date().toLocaleTimeString("cs-CZ", {
+        hour: "2-digit",
+        minute: "2-digit"
+      }) +
+      "** podle času tvého zařízení.";
   }
 
-  if (q.includes("počasí") || q.includes("předpověď") || q.includes("teplota")) {
+  if (
+    q.includes("počasí") ||
+    q.includes("předpověď") ||
+    q.includes("teplota")
+  ) {
     return await getWeather(query);
   }
 
   return null;
 }
 
-// ==========================================
-// ODESÍLÁNÍ ZPRÁV
-// ==========================================
+/* ==========================================
+   HLAS PRO BĚŽNÉ TEXTOVÉ ODPOVĚDI
+   Oprava chybějící funkce speakAnswer().
+   LIVE má vlastní hlasový výstup.
+========================================== */
+
+let browserSpeechEnabled = false;
+
+function speakAnswer(text) {
+  if (liveActive || !browserSpeechEnabled) return;
+  if (!("speechSynthesis" in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(
+    String(text).replace(/[#*_`]/g, " ")
+  );
+
+  utterance.lang = "cs-CZ";
+  utterance.rate = 1;
+  utterance.pitch = 0.9;
+
+  const voices = window.speechSynthesis.getVoices();
+  const czechVoice = voices.find(v =>
+    v.lang.toLowerCase().startsWith("cs")
+  );
+
+  if (czechVoice) utterance.voice = czechVoice;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+/* ==========================================
+   ODESÍLÁNÍ TEXTOVÝCH ZPRÁV
+========================================== */
 
 async function sendMessage(query) {
   if (busy || !query.trim()) return;
@@ -803,26 +712,29 @@ async function sendMessage(query) {
 
     if (answer !== null) {
       await api("chat-save-message", {
-        chatId:currentChatId,
-        role:"user",
-        content:query
+        chatId: currentChatId,
+        role: "user",
+        content: query
       });
 
       await api("chat-save-message", {
-        chatId:currentChatId,
-        role:"assistant",
-        content:answer
+        chatId: currentChatId,
+        role: "assistant",
+        content: answer
       });
+
     } else {
       const data = await api("chat-send", {
-        chatId:currentChatId,
-        message:query
+        chatId: currentChatId,
+        message: query
       });
 
       answer = data.reply;
     }
 
-    if (!answer) throw new Error("Server nevrátil text odpovědi.");
+    if (!answer) {
+      throw new Error("Server nevrátil text odpovědi.");
+    }
 
     $("typing").style.display = "none";
     const target = addMessage("", false);
@@ -833,8 +745,11 @@ async function sendMessage(query) {
 
   } catch (error) {
     $("typing").style.display = "none";
-    addMessage("Nepodařilo se získat odpověď.\n\n" + error.message, false);
-    console.error(error);
+    addMessage(
+      "Nepodařilo se získat odpověď.\n\n" + error.message,
+      false
+    );
+    console.error("Chat:", error);
 
   } finally {
     busy = false;
@@ -847,6 +762,7 @@ async function sendMessage(query) {
 
 $("form").addEventListener("submit", event => {
   event.preventDefault();
+
   const value = $("input").value.trim();
 
   if (value) {
@@ -862,110 +778,114 @@ document.querySelectorAll(".quick button").forEach(button => {
   };
 });
 
-
-// ==========================================
-// ANTZADEN AI – GEMINI LIVE VOICE
-// ==========================================
+/* ==========================================
+   GEMINI LIVE – HLASOVÝ REŽIM
+========================================== */
 
 let liveSocket = null;
 let liveStream = null;
 let liveAudioContext = null;
 let liveProcessor = null;
 let liveSource = null;
+let liveMute = null;
+
 let liveActive = false;
 let liveReady = false;
 let liveOutputEnabled = true;
 let liveNextPlayTime = 0;
 let liveSources = [];
+
 let liveUserTranscript = "";
 let liveAssistantTranscript = "";
 
-const liveMic = $('voice-mic');
-const liveToggle = $('voice-toggle');
-const liveStatus = $('voice-status');
+const liveMic = $("voice-mic");
+const liveToggle = $("voice-toggle");
+const liveStatus = $("voice-status");
 
 function liveStatusText(text) {
-    liveStatus.textContent = text;
+  liveStatus.textContent = text;
 }
 
 function liveBase64(bytes) {
-    let binary = "";
-    const chunk = 0x8000;
+  let binary = "";
+  const chunk = 0x8000;
 
-    for (let i = 0; i < bytes.length; i += chunk) {
-        binary += String.fromCharCode(
-            ...bytes.subarray(i, i + chunk)
-        );
-    }
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(i, i + chunk)
+    );
+  }
 
-    return btoa(binary);
+  return btoa(binary);
 }
 
 function liveResample(inputData, fromRate, toRate) {
-    if (fromRate === toRate) return inputData;
+  if (fromRate === toRate) return inputData;
 
-    const ratio = fromRate / toRate;
-    const length = Math.floor(inputData.length / ratio);
-    const output = new Float32Array(length);
+  const ratio = fromRate / toRate;
+  const length = Math.floor(inputData.length / ratio);
+  const output = new Float32Array(length);
 
-    for (let i = 0; i < length; i++) {
-        const start = Math.floor(i * ratio);
-        const end = Math.min(
-            Math.floor((i + 1) * ratio),
-            inputData.length
-        );
+  for (let i = 0; i < length; i++) {
+    const start = Math.floor(i * ratio);
+    const end = Math.min(
+      Math.floor((i + 1) * ratio),
+      inputData.length
+    );
 
-        let sum = 0;
-        for (let j = start; j < end; j++) {
-            sum += inputData[j];
-        }
+    let sum = 0;
 
-        output[i] = sum / Math.max(1, end - start);
+    for (let j = start; j < end; j++) {
+      sum += inputData[j];
     }
 
-    return output;
+    output[i] = sum / Math.max(1, end - start);
+  }
+
+  return output;
 }
 
 function liveStopPlayback() {
-    liveSources.forEach(source => {
-        try {
-            source.stop();
-        } catch {}
-    });
+  liveSources.forEach(source => {
+    try {
+      source.stop();
+    } catch {}
+  });
 
-    liveSources = [];
+  liveSources = [];
 
-    if (liveAudioContext) {
-        liveNextPlayTime = liveAudioContext.currentTime;
-    }
+  if (liveAudioContext) {
+    liveNextPlayTime = liveAudioContext.currentTime;
+  }
 }
 
 function livePlayAudio(base64) {
-    if (!liveOutputEnabled || !liveAudioContext) return;
+  if (!liveOutputEnabled || !liveAudioContext) return;
 
+  try {
     const binary = atob(base64);
     const samples = new Int16Array(binary.length / 2);
 
     for (let i = 0; i < samples.length; i++) {
-        const lo = binary.charCodeAt(i * 2);
-        const hi = binary.charCodeAt(i * 2 + 1);
-        let value = (hi << 8) | lo;
+      const lo = binary.charCodeAt(i * 2);
+      const hi = binary.charCodeAt(i * 2 + 1);
 
-        if (value >= 32768) value -= 65536;
+      let value = (hi << 8) | lo;
+      if (value >= 32768) value -= 65536;
 
-        samples[i] = value;
+      samples[i] = value;
     }
 
     const buffer = liveAudioContext.createBuffer(
-        1,
-        samples.length,
-        24000
+      1,
+      samples.length,
+      24000
     );
 
     const channel = buffer.getChannelData(0);
 
     for (let i = 0; i < samples.length; i++) {
-        channel[i] = samples[i] / 32768;
+      channel[i] = samples[i] / 32768;
     }
 
     const source = liveAudioContext.createBufferSource();
@@ -973,8 +893,8 @@ function livePlayAudio(base64) {
     source.connect(liveAudioContext.destination);
 
     const startAt = Math.max(
-        liveAudioContext.currentTime,
-        liveNextPlayTime
+      liveAudioContext.currentTime,
+      liveNextPlayTime
     );
 
     source.start(startAt);
@@ -983,329 +903,403 @@ function livePlayAudio(base64) {
     liveSources.push(source);
 
     source.onended = () => {
-        liveSources = liveSources.filter(x => x !== source);
+      liveSources = liveSources.filter(x => x !== source);
     };
+
+  } catch (error) {
+    console.error("Přehrání LIVE audia:", error);
+  }
 }
 
 function liveSendAudio(floatData) {
-    if (
-        !liveSocket ||
-        liveSocket.readyState !== WebSocket.OPEN ||
-        !liveReady
-    ) return;
+  if (
+    !liveSocket ||
+    liveSocket.readyState !== WebSocket.OPEN ||
+    !liveReady ||
+    !liveAudioContext
+  ) {
+    return;
+  }
 
-    const resampled = liveResample(
-        floatData,
-        liveAudioContext.sampleRate,
-        16000
-    );
+  const resampled = liveResample(
+    floatData,
+    liveAudioContext.sampleRate,
+    16000
+  );
 
-    const pcm = new Int16Array(resampled.length);
+  const pcm = new Int16Array(resampled.length);
 
-    for (let i = 0; i < resampled.length; i++) {
-        const sample = Math.max(-1, Math.min(1, resampled[i]));
-        pcm[i] = sample < 0
-            ? sample * 32768
-            : sample * 32767;
+  for (let i = 0; i < resampled.length; i++) {
+    const sample = Math.max(-1, Math.min(1, resampled[i]));
+
+    pcm[i] = sample < 0
+      ? sample * 32768
+      : sample * 32767;
+  }
+
+  liveSocket.send(JSON.stringify({
+    realtimeInput: {
+      audio: {
+        data: liveBase64(
+          new Uint8Array(
+            pcm.buffer,
+            pcm.byteOffset,
+            pcm.byteLength
+          )
+        ),
+        mimeType: "audio/pcm;rate=16000"
+      }
     }
-
-    liveSocket.send(JSON.stringify({
-        realtimeInput: {
-            audio: {
-                data: liveBase64(
-                    new Uint8Array(
-                        pcm.buffer,
-                        pcm.byteOffset,
-                        pcm.byteLength
-                    )
-                ),
-                mimeType: "audio/pcm;rate=16000"
-            }
-        }
-    }));
+  }));
 }
 
 async function liveStartMicrophone() {
-    liveStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-        }
-    });
+  liveStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
+  });
 
-    liveAudioContext = new AudioContext();
+  liveAudioContext = new AudioContext();
+  await liveAudioContext.resume();
 
-    await liveAudioContext.resume();
+  liveSource = liveAudioContext.createMediaStreamSource(liveStream);
 
-    liveSource = liveAudioContext.createMediaStreamSource(
-        liveStream
-    );
+  liveProcessor = liveAudioContext.createScriptProcessor(
+    4096,
+    1,
+    1
+  );
 
-    liveProcessor = liveAudioContext.createScriptProcessor(
-        4096,
-        1,
-        1
-    );
+  liveProcessor.onaudioprocess = event => {
+    if (!liveActive || !liveReady) return;
 
-    liveProcessor.onaudioprocess = event => {
-        if (!liveActive || !liveReady) return;
+    const data = event.inputBuffer.getChannelData(0);
+    liveSendAudio(new Float32Array(data));
+  };
 
-        const data = event.inputBuffer.getChannelData(0);
-        liveSendAudio(new Float32Array(data));
-    };
+  liveMute = liveAudioContext.createGain();
+  liveMute.gain.value = 0;
 
-    liveSource.connect(liveProcessor);
-
-    // Tichý výstup zachovává zpracování mikrofonu.
-    const mute = liveAudioContext.createGain();
-    mute.gain.value = 0;
-
-    liveProcessor.connect(mute);
-    mute.connect(liveAudioContext.destination);
+  liveSource.connect(liveProcessor);
+  liveProcessor.connect(liveMute);
+  liveMute.connect(liveAudioContext.destination);
 }
 
 async function startLiveVoice() {
-    if (liveActive) return;
+  if (liveActive) return;
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-        liveStatusText("Mikrofon vyžaduje HTTPS.");
-        return;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    liveStatusText("Mikrofon vyžaduje HTTPS.");
+    return;
+  }
+
+  liveActive = true;
+  liveReady = false;
+  liveUserTranscript = "";
+  liveAssistantTranscript = "";
+
+  liveMic.textContent = "⏹ Ukončit LIVE";
+  liveStatusText("Povoluji mikrofon…");
+
+  try {
+    // Mikrofon spustíme před připojením, aby se chyba
+    // oprávnění nezasekla až po připojení k serveru.
+    await liveStartMicrophone();
+
+    liveStatusText("Získávám bezpečný LIVE token…");
+
+    const tokenData = await api("live-token");
+
+    if (!tokenData.token) {
+      throw new Error("Server nevydal hlasový token.");
     }
 
-    liveActive = true;
-    liveReady = false;
-    liveUserTranscript = "";
-    liveAssistantTranscript = "";
+    const url =
+      "wss://generativelanguage.googleapis.com/ws/" +
+      "google.ai.generativelanguage.v1beta.GenerativeService." +
+      "BidiGenerateContentConstrained?access_token=" +
+      encodeURIComponent(tokenData.token);
 
-    liveMic.textContent = "⏹ Ukončit LIVE";
-    liveStatusText("Připojuji AntZadEn LIVE…");
+    liveSocket = new WebSocket(url);
 
-    try {
-        const tokenData = await api("live-token");
+    liveSocket.onopen = () => {
+      if (!liveActive || !liveSocket) return;
 
-        if (!tokenData.token) {
-            throw new Error("Server nevydal hlasový token.");
+      liveStatusText("Nastavuji AntZadEn LIVE…");
+
+      liveSocket.send(JSON.stringify({
+        setup: {
+          model: "models/gemini-3.1-flash-live-preview",
+
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: "Charon"
+                }
+              }
+            }
+          },
+
+          systemInstruction: {
+            parts: [{
+              text:
+                "Jsi AntZadEn AI Assistant. " +
+                "Mluv přirozeně a přátelsky česky. " +
+                "Jsi hlasový asistent. " +
+                "Odpovídej jasně, srozumitelně a přirozeně. " +
+                "Neodpovídej zbytečně dlouze. " +
+                "Pokud uživatel mluví česky, odpovídej česky."
+            }]
+          },
+
+          inputAudioTranscription: {},
+          outputAudioTranscription: {}
+        }
+      }));
+    };
+
+    liveSocket.onmessage = async event => {
+      if (!liveActive) return;
+
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.error) {
+          throw new Error(
+            data.error.message || "Chyba Gemini LIVE."
+          );
         }
 
-        const url =
-            "wss://generativelanguage.googleapis.com/ws/" +
-            "google.ai.generativelanguage.v1beta.GenerativeService." +
-            "BidiGenerateContentConstrained?access_token=" +
-            encodeURIComponent(tokenData.token);
+        if (data.setupComplete) {
+          liveReady = true;
+          liveStatusText("🟢 LIVE – můžeš mluvit");
+          return;
+        }
 
-        liveSocket = new WebSocket(url);
+        const content = data.serverContent;
+        if (!content) return;
 
-        liveSocket.onopen = async () => {
-            liveSocket.send(JSON.stringify({
-                setup: {
-                    model: "models/gemini-3.1-flash-live-preview",
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: {
-                                    voiceName: "Charon"
-                                }
-                            }
-                        }
-                    },
-                    systemInstruction: {
-                        parts: [{
-                            text:
-                                "Jsi AntZadEn AI Assistant. " +
-                                "Mluv přirozeně a přátelsky česky. " +
-                                "Odpovídej jako přirozený hlasový asistent. " +
-                                "Mluv jasně a srozumitelně."
-                        }]
-                    },
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {}
-                }
-            }));
-        };
+        if (content.inputTranscription?.text) {
+          liveUserTranscript += content.inputTranscription.text;
+        }
 
-        liveSocket.onmessage = async event => {
-            const data = JSON.parse(event.data);
+        if (content.outputTranscription?.text) {
+          liveAssistantTranscript += content.outputTranscription.text;
+        }
 
-            if (data.setupComplete) {
-                await liveStartMicrophone();
+        if (content.interrupted) {
+          liveStopPlayback();
+        }
 
-                liveReady = true;
-                liveStatusText("🟢 LIVE – můžeš mluvit");
-                return;
-            }
+        const parts = content.modelTurn?.parts || [];
 
-            const content = data.serverContent;
+        for (const part of parts) {
+          if (
+            part.inlineData?.data &&
+            part.inlineData.mimeType?.startsWith("audio/")
+          ) {
+            livePlayAudio(part.inlineData.data);
+          }
+        }
 
-            if (!content) return;
+        if (content.turnComplete) {
+          const userText = liveUserTranscript.trim();
+          const assistantText = liveAssistantTranscript.trim();
 
-            if (content.inputTranscription?.text) {
-                liveUserTranscript += content.inputTranscription.text;
-            }
+          liveUserTranscript = "";
+          liveAssistantTranscript = "";
 
-            if (content.outputTranscription?.text) {
-                liveAssistantTranscript += content.outputTranscription.text;
-            }
+          if (userText) {
+            addMessage(userText, true);
 
-            if (content.interrupted) {
-                liveStopPlayback();
-            }
+            saveLocalMessage("user", userText).catch(error => {
+              console.error("Uložení hlasové otázky:", error);
+            });
+          }
 
-            const parts = content.modelTurn?.parts || [];
+          if (assistantText) {
+            addMessage(assistantText, false);
 
-            for (const part of parts) {
-                if (
-                    part.inlineData?.data &&
-                    part.inlineData.mimeType?.startsWith("audio/")
-                ) {
-                    livePlayAudio(part.inlineData.data);
-                }
-            }
+            saveLocalMessage("assistant", assistantText).catch(error => {
+              console.error("Uložení hlasové odpovědi:", error);
+            });
+          }
 
-            if (content.turnComplete) {
-                const userText = liveUserTranscript.trim();
-                const assistantText = liveAssistantTranscript.trim();
+          liveStatusText("🟢 LIVE – poslouchám");
+        }
 
-                if (userText && currentChatId) {
-                    saveLocalMessage("user", userText).catch(console.error);
-                }
+      } catch (error) {
+        console.error("Zpráva LIVE:", error);
+        liveStatusText("Chyba LIVE: " + error.message);
+      }
+    };
 
-                if (assistantText && currentChatId) {
-                    saveLocalMessage("assistant", assistantText).catch(console.error);
-                }
+    liveSocket.onerror = () => {
+      liveStatusText("Chyba LIVE spojení. Zkontroluj token a Worker.");
+    };
 
-                if (userText) addMessage(userText, true);
-                if (assistantText) addMessage(assistantText);
+    liveSocket.onclose = event => {
+      if (!liveActive) return;
 
-                liveUserTranscript = "";
-                liveAssistantTranscript = "";
+      const reason = event.reason || "Spojení bylo ukončeno.";
+      stopLiveVoice();
+      liveStatusText("LIVE ukončeno: " + reason);
+    };
 
-                liveStatusText("🟢 LIVE – poslouchám");
-            }
-        };
-
-        liveSocket.onerror = () => {
-            liveStatusText("Chyba LIVE spojení.");
-        };
-
-        liveSocket.onclose = () => {
-            if (liveActive) {
-                stopLiveVoice();
-                liveStatusText("LIVE spojení bylo ukončeno.");
-            }
-        };
-
-    } catch (error) {
-        console.error("AntZadEn LIVE:", error);
-        liveStatusText("Chyba: " + error.message);
-        await stopLiveVoice();
-    }
+  } catch (error) {
+    console.error("AntZadEn LIVE:", error);
+    await stopLiveVoice();
+    liveStatusText("Chyba LIVE: " + error.message);
+  }
 }
 
 async function stopLiveVoice() {
-    liveActive = false;
-    liveReady = false;
+  liveActive = false;
+  liveReady = false;
 
-    liveStopPlayback();
+  liveStopPlayback();
 
-    if (liveSocket) {
-        const socket = liveSocket;
-        liveSocket = null;
+  const socket = liveSocket;
+  liveSocket = null;
 
-        if (
-            socket.readyState === WebSocket.OPEN ||
-            socket.readyState === WebSocket.CONNECTING
-        ) {
-            socket.close();
-        }
+  if (socket) {
+    socket.onclose = null;
+    socket.onerror = null;
+    socket.onmessage = null;
+
+    if (
+      socket.readyState === WebSocket.OPEN ||
+      socket.readyState === WebSocket.CONNECTING
+    ) {
+      try {
+        socket.close();
+      } catch {}
     }
+  }
 
-    if (liveProcessor) {
-        liveProcessor.disconnect();
-        liveProcessor.onaudioprocess = null;
-        liveProcessor = null;
-    }
+  if (liveProcessor) {
+    liveProcessor.onaudioprocess = null;
+    try {
+      liveProcessor.disconnect();
+    } catch {}
+    liveProcessor = null;
+  }
 
-    if (liveSource) {
-        liveSource.disconnect();
-        liveSource = null;
-    }
+  if (liveSource) {
+    try {
+      liveSource.disconnect();
+    } catch {}
+    liveSource = null;
+  }
 
-    if (liveStream) {
-        liveStream.getTracks().forEach(track => track.stop());
-        liveStream = null;
-    }
+  if (liveMute) {
+    try {
+      liveMute.disconnect();
+    } catch {}
+    liveMute = null;
+  }
 
-    if (liveAudioContext) {
-        await liveAudioContext.close().catch(() => {});
-        liveAudioContext = null;
-    }
+  if (liveStream) {
+    liveStream.getTracks().forEach(track => track.stop());
+    liveStream = null;
+  }
 
-    liveMic.textContent = "🎤 Spustit LIVE";
+  if (liveAudioContext) {
+    const context = liveAudioContext;
+    liveAudioContext = null;
+    await context.close().catch(() => {});
+  }
+
+  liveMic.textContent = "🎤 Spustit LIVE";
 }
 
 liveMic.onclick = () => {
-    if (liveActive) {
-        stopLiveVoice();
-        liveStatusText("LIVE vypnuto.");
-    } else {
-        startLiveVoice();
-    }
+  if (liveActive) {
+    stopLiveVoice();
+    liveStatusText("LIVE vypnuto.");
+  } else {
+    startLiveVoice();
+  }
 };
 
 liveToggle.onclick = () => {
-    liveOutputEnabled = !liveOutputEnabled;
+  liveOutputEnabled = !liveOutputEnabled;
 
-    liveToggle.textContent = liveOutputEnabled
-        ? "🔊 Hlas: zapnutý"
-        : "🔇 Hlas: vypnutý";
+  liveToggle.textContent = liveOutputEnabled
+    ? "🔊 Hlas: zapnutý"
+    : "🔇 Hlas: vypnutý";
 
-    if (!liveOutputEnabled) {
-        liveStopPlayback();
+  browserSpeechEnabled = liveOutputEnabled;
+
+  if (!liveOutputEnabled) {
+    liveStopPlayback();
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
     }
+  }
 };
 
-// ==========================================
-// KONTROLA SERVERU
-// ==========================================
+/* ==========================================
+   KONTROLA SERVERU
+========================================== */
 
 async function checkConnection() {
   try {
-    const response = await fetch(WORKER_URL, {cache:"no-store"});
+    const response = await fetch(WORKER_URL, {
+      cache: "no-store"
+    });
+
     const data = await response.json();
 
-    const online = data.status === "online" && data.ai && data.database;
+    const online =
+      data.status === "online" &&
+      data.ai &&
+      data.database;
 
     $("connection-status").textContent = online
       ? "● AI ONLINE"
       : "● ČÁSTEČNĚ ONLINE";
 
-    $("connection-status").style.color = online ? "#55e879" : "#ff7777";
+    $("connection-status").style.color =
+      online ? "#55e879" : "#ff7777";
+
   } catch {
     $("connection-status").textContent = "● OFFLINE";
     $("connection-status").style.color = "#ff7777";
   }
 }
 
-// ==========================================
-// ADMINISTRACE
-// ==========================================
+/* ==========================================
+   ADMINISTRACE
+========================================== */
 
 async function adminRequest(action, extra = {}) {
-  const headers = {"Content-Type":"application/json"};
+  const headers = { "Content-Type": "application/json" };
 
   if (adminToken) {
     headers.Authorization = "Bearer " + adminToken;
   }
 
   const response = await fetch(WORKER_URL, {
-    method:"POST",
+    method: "POST",
     headers,
-    body:JSON.stringify({action,...extra})
+    body: JSON.stringify({ action, ...extra })
   });
 
-  const data = await response.json();
+  const raw = await response.text();
+  let data;
+
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Server administrace vrátil neplatnou odpověď.");
+  }
 
   if (!response.ok) {
     throw new Error(data.error || "Chyba administrace.");
@@ -1334,12 +1328,16 @@ async function checkAdminSession() {
 
   try {
     await adminRequest("admin-check");
+
     $("admin-login").style.display = "none";
     $("admin-dashboard").style.display = "block";
+
     await refreshAdminStatus();
+
   } catch {
     adminToken = "";
     sessionStorage.removeItem("antzaden_admin_token");
+
     $("admin-login").style.display = "block";
     $("admin-dashboard").style.display = "none";
   }
@@ -1350,15 +1348,21 @@ $("admin-login-button").onclick = async () => {
 
   try {
     const data = await adminRequest("admin-login", {
-      password:$("admin-password").value
+      password: $("admin-password").value
     });
+
+    if (!data.token) {
+      throw new Error("Server nevrátil administrační token.");
+    }
 
     adminToken = data.token;
     sessionStorage.setItem("antzaden_admin_token", adminToken);
+
     $("admin-password").value = "";
     $("admin-error").textContent = "";
 
     await checkAdminSession();
+
   } catch (error) {
     $("admin-error").textContent = error.message;
   }
@@ -1366,12 +1370,21 @@ $("admin-login-button").onclick = async () => {
 
 async function refreshAdminStatus() {
   try {
-    const response = await fetch(WORKER_URL, {cache:"no-store"});
+    const response = await fetch(WORKER_URL, {
+      cache: "no-store"
+    });
+
     const data = await response.json();
 
-    $("admin-ai-status").textContent = data.ai ? "🟢 Online" : "🔴 Offline";
-    $("admin-search-status").textContent = data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
-    $("admin-db-status").textContent = data.database ? "🟢 Připojena" : "🔴 Nepřipojena";
+    $("admin-ai-status").textContent =
+      data.ai ? "🟢 Online" : "🔴 Offline";
+
+    $("admin-search-status").textContent =
+      data.search ? "🟢 Aktivní" : "🔴 Neaktivní";
+
+    $("admin-db-status").textContent =
+      data.database ? "🟢 Připojena" : "🔴 Nepřipojena";
+
   } catch {
     $("admin-ai-status").textContent = "🔴 Nedostupná";
     $("admin-search-status").textContent = "🔴 Nedostupné";
@@ -1384,6 +1397,7 @@ $("admin-refresh").onclick = refreshAdminStatus;
 $("admin-logout").onclick = () => {
   adminToken = "";
   sessionStorage.removeItem("antzaden_admin_token");
+
   $("admin-dashboard").style.display = "none";
   $("admin-login").style.display = "block";
   $("admin-error").textContent = "Byl jsi odhlášen.";
@@ -1394,7 +1408,12 @@ $("admin-open").onclick = () => {
 };
 
 $("admin-back").onclick = () => {
-  history.replaceState(null, "", location.pathname + location.search);
+  history.replaceState(
+    null,
+    "",
+    location.pathname + location.search
+  );
+
   hideAdmin();
 };
 
@@ -1408,9 +1427,9 @@ function handleRoute() {
 
 window.addEventListener("hashchange", handleRoute);
 
-// ==========================================
-// START
-// ==========================================
+/* ==========================================
+   START APLIKACE
+========================================== */
 
 console.log("AntZadEn AI Assistant – Guest Mode.");
 
@@ -1419,5 +1438,3 @@ setInterval(checkConnection, 30000);
 handleRoute();
 
 </script>
-</body>
-</html>
