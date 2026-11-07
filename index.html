@@ -7,8 +7,10 @@
 <meta name="description" content="AntZadEn AI Assistant – bez registrace a přihlášení.">
 <title>AntZadEn AI Assistant</title>
 <link rel="icon" type="image/png" href="antzaden-avatar.png">
+
 <style>
 *{box-sizing:border-box}
+
 :root{
   --bg:#090d0b;
   --panel:#101713;
@@ -17,6 +19,7 @@
   --text:#edf5ef;
   --muted:#91a397;
 }
+
 body{
   margin:0;
   height:100dvh;
@@ -25,10 +28,13 @@ body{
   font-family:Arial,sans-serif;
   overflow:hidden;
 }
+
 button,input{font:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
+
 #app{height:100dvh;display:none}
+
 header{
   height:72px;
   padding:12px 20px;
@@ -38,208 +44,387 @@ header{
   align-items:center;
   justify-content:space-between;
 }
+
 .brand{display:flex;align-items:center;gap:12px}
+
 .logo{
- .logo{
-   width:42px;
-   height:42px;
-   border-radius:14px;
-   object-fit:cover;
-   display:block;
-   border:1px solid #00ff55;
-   box-shadow:0 0 15px #00ff5577;
-   flex-shrink:0;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  object-fit:cover;
+  display:block;
+  border:1px solid #00ff55;
+  box-shadow:0 0 15px #00ff5577;
+  flex-shrink:0;
 }
+
 .brand h1{font-size:17px;margin:0}
 .sub{font-size:12px;color:var(--muted);margin-top:5px}
 .status{font-size:11px;color:var(--green)}
 .header-right{display:flex;align-items:center;gap:12px}
+
 .small-button{
-  background:#17231a;color:#b9e9c4;
-  border:1px solid #35513b;border-radius:9px;
-  padding:9px 12px;font-size:12px;
+  background:#17231a;
+  color:#b9e9c4;
+  border:1px solid #35513b;
+  border-radius:9px;
+  padding:9px 12px;
+  font-size:12px;
 }
+
 #layout{
   height:calc(100dvh - 72px);
-  display:flex;min-height:0;
+  display:flex;
+  min-height:0;
 }
+
 #sidebar{
-  width:255px;flex-shrink:0;
-  background:#0c120e;border-right:1px solid #26372c;
-  display:flex;flex-direction:column;
-  padding:14px;min-height:0;
+  width:255px;
+  flex-shrink:0;
+  background:#0c120e;
+  border-right:1px solid #26372c;
+  display:flex;
+  flex-direction:column;
+  padding:14px;
+  min-height:0;
 }
+
 .new-chat{
-  background:#183d24;border:1px solid #3d8a50;
-  color:#a9f5b9;border-radius:11px;
-  padding:12px;text-align:left;font-weight:bold;
+  background:#183d24;
+  border:1px solid #3d8a50;
+  color:#a9f5b9;
+  border-radius:11px;
+  padding:12px;
+  text-align:left;
+  font-weight:bold;
 }
+
 .sidebar-title{
-  font-size:10px;color:#748579;letter-spacing:1.5px;
+  font-size:10px;
+  color:#748579;
+  letter-spacing:1.5px;
   margin:22px 5px 10px;
 }
+
 #chat-list{
-  overflow-y:auto;display:flex;
-  flex-direction:column;gap:6px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
-.chat-item{display:flex;align-items:center;gap:3px;min-width:0}
+
+.chat-item{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  min-width:0;
+}
+
 .chat-select{
-  flex:1;min-width:0;text-align:left;
-  background:transparent;border:1px solid transparent;
-  color:#bdcbbf;border-radius:9px;
-  padding:10px;font-size:12px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  flex:1;
+  min-width:0;
+  text-align:left;
+  background:transparent;
+  border:1px solid transparent;
+  color:#bdcbbf;
+  border-radius:9px;
+  padding:10px;
+  font-size:12px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
+
 .chat-select:hover,.chat-select.active{
-  background:#18241b;border-color:#304b35;color:#fff;
+  background:#18241b;
+  border-color:#304b35;
+  color:#fff;
 }
+
 .chat-rename,.chat-delete{
-  background:transparent;border:0;color:#78887c;
-  padding:7px;font-size:15px;flex-shrink:0;
+  background:transparent;
+  border:0;
+  color:#78887c;
+  padding:7px;
+  font-size:15px;
+  flex-shrink:0;
 }
+
 .chat-rename:hover{color:var(--green)}
 .chat-delete:hover{color:#ff7777}
+
 .sidebar-bottom{
-  margin-top:auto;padding-top:12px;
+  margin-top:auto;
+  padding-top:12px;
   border-top:1px solid #26372c;
 }
-#main-area{flex:1;min-width:0;display:flex;flex-direction:column}
+
+#main-area{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+
 .quick{
-  display:flex;gap:8px;padding:11px 15px;
-  background:#0c120e;overflow-x:auto;flex-shrink:0;
+  display:flex;
+  gap:8px;
+  padding:11px 15px;
+  background:#0c120e;
+  overflow-x:auto;
+  flex-shrink:0;
 }
+
 .quick button{
-  white-space:nowrap;background:#151e18;
-  color:#c6d5ca;border:1px solid #304235;
-  border-radius:22px;padding:9px 14px;font-size:12px;
+  white-space:nowrap;
+  background:#151e18;
+  color:#c6d5ca;
+  border:1px solid #304235;
+  border-radius:22px;
+  padding:9px 14px;
+  font-size:12px;
 }
-.quick button:hover{border-color:var(--green);color:white}
+
+.quick button:hover{
+  border-color:var(--green);
+  color:white;
+}
+
 main{
-  width:100%;max-width:950px;margin:0 auto;
-  flex:1;min-height:0;display:flex;flex-direction:column;
+  width:100%;
+  max-width:950px;
+  margin:0 auto;
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
   padding:15px 16px 0;
 }
+
 #chat{
-  flex:1;overflow-y:auto;display:flex;
-  flex-direction:column;gap:13px;
-  padding:5px 3px 20px;scroll-behavior:smooth;
+  flex:1;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  padding:5px 3px 20px;
+  scroll-behavior:smooth;
 }
+
 .message{
-  max-width:85%;padding:13px 16px;
-  border-radius:17px;line-height:1.6;
-  font-size:14px;overflow-wrap:anywhere;
+  max-width:85%;
+  padding:13px 16px;
+  border-radius:17px;
+  line-height:1.6;
+  font-size:14px;
+  overflow-wrap:anywhere;
   animation:appear .2s ease;
 }
+
 @keyframes appear{
   from{opacity:0;transform:translateY(5px)}
   to{opacity:1;transform:translateY(0)}
 }
+
 .bot{
-  align-self:flex-start;background:#141e17;
-  border:1px solid #2a3b2e;border-bottom-left-radius:5px;
+  align-self:flex-start;
+  background:#141e17;
+  border:1px solid #2a3b2e;
+  border-bottom-left-radius:5px;
 }
+
 .user{
-  align-self:flex-end;background:#176b35;
-  border:1px solid #2c9b4b;border-bottom-right-radius:5px;
+  align-self:flex-end;
+  background:#176b35;
+  border:1px solid #2c9b4b;
+  border-bottom-right-radius:5px;
   white-space:pre-wrap;
 }
+
 .botname{
-  font-size:10px;color:var(--green);
-  font-weight:bold;letter-spacing:1px;margin-bottom:7px;
+  font-size:10px;
+  color:var(--green);
+  font-weight:bold;
+  letter-spacing:1px;
+  margin-bottom:7px;
 }
+
 .markdown{overflow-wrap:anywhere}
 .markdown strong{color:#75f596}
+
 .markdown h1,.markdown h2,.markdown h3{
-  color:#85f5a0;line-height:1.3;
+  color:#85f5a0;
+  line-height:1.3;
 }
+
 .markdown h1{font-size:21px}
 .markdown h2{font-size:18px}
 .markdown h3{font-size:16px}
 .markdown a{color:#78f49a}
+
 .markdown code{
-  background:#202d23;padding:3px 6px;
-  border-radius:5px;color:#8affae;
+  background:#202d23;
+  padding:3px 6px;
+  border-radius:5px;
+  color:#8affae;
   font-family:Consolas,monospace;
 }
+
 .markdown pre{
-  background:#080e0a;border:1px solid #2a3b2e;
-  padding:13px;border-radius:10px;
-  overflow-x:auto;white-space:pre;
+  background:#080e0a;
+  border:1px solid #2a3b2e;
+  padding:13px;
+  border-radius:10px;
+  overflow-x:auto;
+  white-space:pre;
 }
-.markdown pre code{background:none;padding:0}
+
+.markdown pre code{
+  background:none;
+  padding:0;
+}
+
 .markdown blockquote{
   border-left:3px solid var(--green);
-  margin:9px 0;padding:4px 12px;color:#b7c9bc;
+  margin:9px 0;
+  padding:4px 12px;
+  color:#b7c9bc;
 }
+
 .markdown li{margin:5px 0}
+
 #typing{
-  display:none;align-self:flex-start;align-items:center;
-  gap:10px;padding:12px 15px;background:#111a14;
-  border:1px solid #2a3b2e;border-radius:16px;
-  color:var(--muted);font-size:12px;
+  display:none;
+  align-self:flex-start;
+  align-items:center;
+  gap:10px;
+  padding:12px 15px;
+  background:#111a14;
+  border:1px solid #2a3b2e;
+  border-radius:16px;
+  color:var(--muted);
+  font-size:12px;
 }
+
 .spinner{
-  width:15px;height:15px;border:2px solid #34513b;
-  border-top-color:var(--green);border-radius:50%;
-  animation:spin .7s linear infinite;flex-shrink:0;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.bottom{
-  padding:13px 0 18px;border-top:1px solid #1b2a20;
+  width:15px;
+  height:15px;
+  border:2px solid #34513b;
+  border-top-color:var(--green);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
   flex-shrink:0;
 }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.bottom{
+  padding:13px 0 18px;
+  border-top:1px solid #1b2a20;
+  flex-shrink:0;
+}
+
 #form{
-  display:flex;gap:10px;align-items:center;
-  background:#111914;border:1px solid #304235;
-  border-radius:17px;padding:8px 9px 8px 16px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  background:#111914;
+  border:1px solid #304235;
+  border-radius:17px;
+  padding:8px 9px 8px 16px;
 }
+
 #input{
-  flex:1;min-width:0;background:transparent;
-  border:0;outline:0;color:white;
-  font-size:15px;padding:10px;
+  flex:1;
+  min-width:0;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:white;
+  font-size:15px;
+  padding:10px;
 }
+
 #input::placeholder{color:#718077}
+
 #send{
-  width:44px;height:44px;border:0;border-radius:13px;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:13px;
   background:linear-gradient(135deg,#65ef88,#24b653);
-  color:#061109;font-size:21px;
+  color:#061109;
+  font-size:21px;
 }
+
 .voicebar{
-  display:flex;align-items:center;gap:9px;
-  flex-wrap:wrap;padding:10px 0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:10px 0;
 }
+
 .voicebar button{
-  background:#14251a;border:1px solid #35543c;
-  color:#a6f5b8;border-radius:10px;padding:9px 13px;
+  background:#14251a;
+  border:1px solid #35543c;
+  color:#a6f5b8;
+  border-radius:10px;
+  padding:9px 13px;
 }
+
 #voice-status{font-size:11px;color:var(--muted)}
+
 .hint{
-  text-align:center;color:#637268;
-  font-size:10px;margin-top:10px;
+  text-align:center;
+  color:#637268;
+  font-size:10px;
+  margin-top:10px;
 }
+
 #admin-screen{
-  display:none;min-height:100dvh;
-  overflow:auto;padding:25px;
+  display:none;
+  min-height:100dvh;
+  overflow:auto;
+  padding:25px;
 }
+
 .admin-wrap{max-width:750px;margin:20px auto}
+
 .admin-card{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:17px;padding:22px;margin:14px 0;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:17px;
+  padding:22px;
+  margin:14px 0;
 }
+
 .admin-card h2{color:#75f596;margin-top:0}
+
 .admin-input{
-  width:100%;padding:13px;margin:10px 0;
-  background:#090d0b;border:1px solid #304235;
-  border-radius:10px;color:white;
+  width:100%;
+  padding:13px;
+  margin:10px 0;
+  background:#090d0b;
+  border:1px solid #304235;
+  border-radius:10px;
+  color:white;
 }
+
 .admin-button{
-  padding:12px 17px;border:0;border-radius:10px;
-  background:var(--green);color:#061109;
-  font-weight:bold;margin:5px;
+  padding:12px 17px;
+  border:0;
+  border-radius:10px;
+  background:var(--green);
+  color:#061109;
+  font-weight:bold;
+  margin:5px;
 }
+
 .admin-muted{color:var(--muted);font-size:13px}
 .admin-error{color:#ff7777;font-size:13px}
 .admin-success{color:var(--green)}
+
 @media(max-width:700px){
   header{height:64px;padding:9px 12px}
   .brand h1{font-size:14px}
@@ -249,6 +434,7 @@ main{
   main{padding:10px 10px 0}
   .message{max-width:94%;font-size:13px}
 }
+
 @media(max-width:480px){
   #sidebar{width:145px;padding:7px}
   .chat-select{font-size:11px;padding:8px}
@@ -266,12 +452,17 @@ main{
 <div id="app">
   <header>
     <div class="brand">
-      <div class="logo">A</div>
+      <img
+        src="antzaden-avatar.png"
+        class="logo"
+        alt="AntZadEn AI Assistant">
+
       <div>
         <h1>AntZadEn AI Assistant</h1>
         <div class="sub">Tvůj osobní AI asistent</div>
       </div>
     </div>
+
     <div class="header-right">
       <span class="status" id="connection-status">● PŘIPOJUJI...</span>
       <button class="small-button" id="admin-open">⚙ Admin</button>
@@ -283,6 +474,7 @@ main{
       <button class="new-chat" id="new-chat">＋ Nový chat</button>
       <div class="sidebar-title">TVÉ KONVERZACE</div>
       <div id="chat-list"></div>
+
       <div class="sidebar-bottom">
         <button class="small-button" id="refresh-chats">↻ Obnovit chaty</button>
       </div>
@@ -299,13 +491,20 @@ main{
       <main>
         <section id="chat" aria-live="polite">
           <div id="typing">
-            <span class="spinner"></span>AntZadEn AI přemýšlí…
+            <span class="spinner"></span>
+            AntZadEn AI přemýšlí…
           </div>
         </section>
 
         <div class="bottom">
           <form id="form">
-            <input id="input" type="text" placeholder="Napiš zprávu..." autocomplete="off" maxlength="4000">
+            <input
+              id="input"
+              type="text"
+              placeholder="Napiš zprávu..."
+              autocomplete="off"
+              maxlength="4000">
+
             <button id="send" type="submit">➤</button>
           </form>
 
@@ -315,7 +514,9 @@ main{
             <span id="voice-status">Hlas připraven</span>
           </div>
 
-          <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim</div>
+          <div class="hint">
+            AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim
+          </div>
         </div>
       </main>
     </div>
@@ -324,8 +525,12 @@ main{
 
 <section id="admin-screen">
   <div class="admin-wrap">
+
     <div class="admin-card">
-      <div style="font-size:12px;color:#55e879;letter-spacing:2px">ANTZADEN AI</div>
+      <div style="font-size:12px;color:#55e879;letter-spacing:2px">
+        ANTZADEN AI
+      </div>
+
       <h1>⚙️ Administrace</h1>
       <p class="admin-muted">Zabezpečený administrační panel</p>
       <button class="small-button" id="admin-back">← Zpět na web</button>
@@ -333,20 +538,34 @@ main{
 
     <div class="admin-card" id="admin-login">
       <h2>🔐 Přihlášení administrátora</h2>
-      <input id="admin-password" class="admin-input" type="password" placeholder="Administrační heslo">
-      <button class="admin-button" id="admin-login-button">Přihlásit se</button>
+
+      <input
+        id="admin-password"
+        class="admin-input"
+        type="password"
+        placeholder="Administrační heslo">
+
+      <button class="admin-button" id="admin-login-button">
+        Přihlásit se
+      </button>
+
       <p id="admin-error" class="admin-error"></p>
     </div>
 
     <div id="admin-dashboard" style="display:none">
+
       <div class="admin-card">
         <h2>📊 Přehled systému</h2>
+
         <p>AI server: <strong id="admin-ai-status">Kontroluji...</strong></p>
         <p>Internetové vyhledávání: <strong id="admin-search-status">Kontroluji...</strong></p>
         <p>Databáze: <strong id="admin-db-status">Kontroluji...</strong></p>
         <p>Anonymní režim: <strong class="admin-success">Aktivní</strong></p>
         <p>Administrace: <strong class="admin-success">Přihlášena</strong></p>
-        <button class="admin-button" id="admin-refresh">🔄 Obnovit stav</button>
+
+        <button class="admin-button" id="admin-refresh">
+          🔄 Obnovit stav
+        </button>
       </div>
 
       <div class="admin-card">
@@ -356,8 +575,11 @@ main{
       </div>
 
       <div class="admin-card">
-        <button class="admin-button" id="admin-logout">🚪 Odhlásit administrátora</button>
+        <button class="admin-button" id="admin-logout">
+          🚪 Odhlásit administrátora
+        </button>
       </div>
+
     </div>
   </div>
 </section>
@@ -366,6 +588,7 @@ main{
 "use strict";
 
 (() => {
+
   const WORKER_URL = "https://antzaden-ai.zadrazilantonin13.workers.dev/";
   const $ = id => document.getElementById(id);
 
@@ -374,31 +597,54 @@ main{
     currentChatId: null,
     busy: false,
     adminToken: sessionStorage.getItem("antzaden_admin_token") || "",
+
     browserSpeechEnabled: false,
+
     liveSocket: null,
     liveStream: null,
     liveAudioContext: null,
     liveProcessor: null,
     liveSource: null,
     liveMute: null,
+
     liveActive: false,
     liveReady: false,
     liveOutputEnabled: false,
     liveNextPlayTime: 0,
     liveSources: [],
+
     liveUserTranscript: "",
     liveAssistantTranscript: "",
     liveSetupTimer: null
   };
 
   const requiredIds = [
-    "app","connection-status","chat-list","chat","typing",
-    "new-chat","refresh-chats","form","input","send",
-    "voice-mic","voice-toggle","voice-status",
-    "admin-screen","admin-login","admin-dashboard",
-    "admin-password","admin-login-button","admin-error",
-    "admin-refresh","admin-logout","admin-open","admin-back",
-    "admin-ai-status","admin-search-status","admin-db-status"
+    "app",
+    "connection-status",
+    "chat-list",
+    "chat",
+    "typing",
+    "new-chat",
+    "refresh-chats",
+    "form",
+    "input",
+    "send",
+    "voice-mic",
+    "voice-toggle",
+    "voice-status",
+    "admin-screen",
+    "admin-login",
+    "admin-dashboard",
+    "admin-password",
+    "admin-login-button",
+    "admin-error",
+    "admin-refresh",
+    "admin-logout",
+    "admin-open",
+    "admin-back",
+    "admin-ai-status",
+    "admin-search-status",
+    "admin-db-status"
   ];
 
   function validatePage() {
@@ -406,6 +652,7 @@ main{
 
     if (missing.length) {
       console.error("AntZadEn AI: chybějící HTML prvky:", missing);
+
       document.body.innerHTML =
         '<div style="background:#090d0b;color:#edf5ef;min-height:100vh;padding:30px;font-family:Arial">' +
         '<h2 style="color:#55e879">AntZadEn AI – chyba stránky</h2>' +
@@ -470,7 +717,6 @@ main{
     setConnection("● PŘIPOJUJI...");
 
     try {
-      // Guest-init musí získat nový token bez starého tokenu.
       const data = await api("guest-init", {}, false);
 
       if (!data.token) {
@@ -498,6 +744,7 @@ main{
       $("chat-list").textContent = "Nepodařilo se připojit.";
 
       clearChatView();
+
       addMessage(
         "Nepodařilo se spustit anonymní režim.\n\n" + error.message,
         false
@@ -534,6 +781,7 @@ main{
 
   function renderMarkdown(text) {
     const lines = String(text).split("\n");
+
     let html = "";
     let paragraph = [];
     let list = "";
@@ -555,17 +803,23 @@ main{
     }
 
     for (const line of lines) {
+
       if (line.trim().startsWith("```")) {
         flush();
         closeList();
 
         if (code) {
-          html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+          html += "<pre><code>" +
+            escapeHTML(codeLines.join("\n")) +
+            "</code></pre>";
+
           codeLines = [];
           code = false;
+
         } else {
           code = true;
         }
+
         continue;
       }
 
@@ -579,16 +833,20 @@ main{
       if (match) {
         flush();
         closeList();
+
         const n = match[1].length;
         html += `<h${n}>${inlineMarkdown(match[2])}</h${n}>`;
+
         continue;
       }
 
       match = line.match(/^\s*[-*]\s+(.+)$/);
+
       const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
 
       if (match || numbered) {
         flush();
+
         const type = match ? "ul" : "ol";
 
         if (list !== type) {
@@ -598,6 +856,7 @@ main{
         }
 
         html += "<li>" + inlineMarkdown((match || numbered)[1]) + "</li>";
+
         continue;
       }
 
@@ -606,7 +865,11 @@ main{
       if (match) {
         flush();
         closeList();
-        html += "<blockquote>" + inlineMarkdown(match[1]) + "</blockquote>";
+
+        html += "<blockquote>" +
+          inlineMarkdown(match[1]) +
+          "</blockquote>";
+
         continue;
       }
 
@@ -621,7 +884,9 @@ main{
     }
 
     if (code) {
-      html += "<pre><code>" + escapeHTML(codeLines.join("\n")) + "</code></pre>";
+      html += "<pre><code>" +
+        escapeHTML(codeLines.join("\n")) +
+        "</code></pre>";
     }
 
     flush();
@@ -639,6 +904,7 @@ main{
 
     const indicator = document.createElement("div");
     indicator.id = "typing";
+
     indicator.innerHTML =
       '<span class="spinner"></span>AntZadEn AI přemýšlí…';
 
@@ -647,12 +913,15 @@ main{
 
   function addMessage(text, isUser = false) {
     const box = document.createElement("div");
+
     box.className = "message " + (isUser ? "user" : "bot");
 
     if (!isUser) {
       const name = document.createElement("div");
+
       name.className = "botname";
       name.textContent = "ANTZADEN AI";
+
       box.appendChild(name);
     }
 
@@ -676,6 +945,7 @@ main{
     }
 
     scrollDown();
+
     return content;
   }
 
@@ -685,15 +955,19 @@ main{
 
   async function typeAnswer(element, text) {
     const chars = Array.from(String(text));
+
     element.textContent = "";
 
     for (let i = 0; i < chars.length; i += 4) {
       element.textContent = chars.slice(0, i + 4).join("");
+
       scrollDown();
+
       await new Promise(resolve => setTimeout(resolve, 8));
     }
 
     element.innerHTML = renderMarkdown(text);
+
     scrollDown();
   }
 
@@ -703,22 +977,27 @@ main{
 
   function makeChatRow(item) {
     const row = document.createElement("div");
+
     row.className = "chat-item";
 
     const button = document.createElement("button");
+
     button.className =
       "chat-select" +
       (item.id === state.currentChatId ? " active" : "");
+
     button.textContent = item.title || "Nový chat";
     button.title = item.title || "Nový chat";
     button.onclick = () => openChat(item.id);
 
     const rename = document.createElement("button");
+
     rename.className = "chat-rename";
     rename.textContent = "✎";
     rename.title = "Přejmenovat chat";
 
     rename.onclick = async () => {
+
       const newTitle = prompt(
         "Zadej nový název chatu:",
         item.title || "Nový chat"
@@ -740,17 +1019,20 @@ main{
         });
 
         await loadChatsListOnly();
+
       } catch (error) {
         alert("Chat se nepodařilo přejmenovat: " + error.message);
       }
     };
 
     const del = document.createElement("button");
+
     del.className = "chat-delete";
     del.textContent = "×";
     del.title = "Smazat chat";
 
     del.onclick = async () => {
+
       if (!confirm("Opravdu chceš tento chat smazat?")) return;
 
       try {
@@ -761,12 +1043,14 @@ main{
         }
 
         await loadChats();
+
       } catch (error) {
         alert("Chat se nepodařilo smazat: " + error.message);
       }
     };
 
     row.append(button, rename, del);
+
     return row;
   }
 
@@ -782,14 +1066,17 @@ main{
 
     if (!data.chats?.length) {
       const p = document.createElement("div");
+
       p.className = "sub";
       p.textContent = "Zatím nemáš žádné chaty.";
+
       list.appendChild(p);
     }
   }
 
   async function loadChats() {
     const list = $("chat-list");
+
     list.innerHTML = "<div class='sub'>Načítám chaty...</div>";
 
     try {
@@ -803,6 +1090,7 @@ main{
       });
 
       if (chats.length) {
+
         const currentExists = chats.some(
           item => item.id === state.currentChatId
         );
@@ -812,13 +1100,16 @@ main{
         } else {
           await openChat(state.currentChatId);
         }
+
       } else {
         await createChat();
       }
 
     } catch (error) {
       list.textContent = "Chyba: " + error.message;
+
       clearChatView();
+
       addMessage(
         "Nepodařilo se načíst chaty: " + error.message,
         false
@@ -837,6 +1128,7 @@ main{
       state.currentChatId = data.chat.id;
 
       clearChatView();
+
       addMessage(
         "Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Nemusíš se registrovat ani přihlašovat. Zeptej se mě na cokoliv!",
         false
@@ -846,6 +1138,7 @@ main{
 
     } catch (error) {
       clearChatView();
+
       addMessage(
         "Nepodařilo se vytvořit chat: " + error.message,
         false
@@ -855,6 +1148,7 @@ main{
 
   async function openChat(chatId) {
     state.currentChatId = chatId;
+
     clearChatView();
 
     try {
@@ -863,11 +1157,14 @@ main{
       clearChatView();
 
       if (!data.messages?.length) {
+
         addMessage(
           "Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!",
           false
         );
+
       } else {
+
         data.messages.forEach(message => {
           addMessage(
             message.content,
@@ -877,6 +1174,7 @@ main{
       }
 
       await loadChatsListOnly();
+
       scrollDown();
 
     } catch (error) {
@@ -933,10 +1231,12 @@ main{
     if (navigator.geolocation) {
       try {
         const position = await new Promise((resolve, reject) => {
+
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             timeout:6500,
             maximumAge:300000
           });
+
         });
 
         return {
@@ -944,6 +1244,7 @@ main{
           longitude:position.coords.longitude,
           name:"Poloha zařízení"
         };
+
       } catch (error) {
         console.warn("GPS nedostupná:", error);
       }
@@ -965,6 +1266,7 @@ main{
           name:data.city || "Přibližná poloha"
         };
       }
+
     } catch (error) {
       console.warn("IP poloha:", error);
     }
@@ -1000,7 +1302,9 @@ main{
 
   async function getWeather(query) {
     const location = await getDeviceLocation();
+
     const date = new Date();
+
     date.setHours(0,0,0,0);
 
     const q = query.toLowerCase();
@@ -1012,6 +1316,7 @@ main{
     }
 
     const today = new Date();
+
     today.setHours(0,0,0,0);
 
     const days = Math.round((date - today) / 86400000);
@@ -1042,6 +1347,7 @@ main{
     }
 
     const data = await response.json();
+
     const index = data.daily.time.indexOf(iso);
 
     if (index < 0) {
@@ -1068,6 +1374,7 @@ main{
     const q = query.toLowerCase();
 
     if (q.includes("kolik je hodin")) {
+
       return "Právě je **" +
         new Date().toLocaleTimeString("cs-CZ",{
           hour:"2-digit",
@@ -1107,11 +1414,13 @@ main{
       .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
+
     utterance.lang = "cs-CZ";
     utterance.rate = 1;
     utterance.pitch = 0.9;
 
     const voices = window.speechSynthesis.getVoices();
+
     const czechVoice = voices.find(voice =>
       voice.lang.toLowerCase().startsWith("cs")
     );
@@ -1132,21 +1441,26 @@ main{
 
     if (!state.currentChatId) {
       await createChat();
+
       if (!state.currentChatId) return;
     }
 
     state.busy = true;
+
     $("send").disabled = true;
     $("input").disabled = true;
 
     addMessage(query, true);
+
     $("typing").style.display = "flex";
+
     scrollDown();
 
     try {
       let answer = await getLocalAnswer(query);
 
       if (answer !== null) {
+
         await api("chat-save-message", {
           chatId:state.currentChatId,
           role:"user",
@@ -1160,6 +1474,7 @@ main{
         });
 
       } else {
+
         const data = await api("chat-send", {
           chatId:state.currentChatId,
           message:query
@@ -1175,12 +1490,15 @@ main{
       $("typing").style.display = "none";
 
       const target = addMessage("", false);
+
       await typeAnswer(target, answer);
 
       speakAnswer(answer);
+
       await loadChatsListOnly();
 
     } catch (error) {
+
       $("typing").style.display = "none";
 
       addMessage(
@@ -1191,10 +1509,14 @@ main{
       console.error("Odeslání zprávy:", error);
 
     } finally {
+
       state.busy = false;
+
       $("send").disabled = false;
       $("input").disabled = false;
+
       $("input").focus();
+
       scrollDown();
     }
   }
@@ -1209,6 +1531,7 @@ main{
 
   function liveBase64(bytes) {
     let binary = "";
+
     const chunk = 0x8000;
 
     for (let i = 0; i < bytes.length; i += chunk) {
@@ -1226,11 +1549,15 @@ main{
     }
 
     const ratio = fromRate / toRate;
+
     const length = Math.floor(inputData.length / ratio);
+
     const output = new Float32Array(length);
 
     for (let i = 0; i < length; i++) {
+
       const start = Math.floor(i * ratio);
+
       const end = Math.min(
         Math.floor((i + 1) * ratio),
         inputData.length
@@ -1273,7 +1600,9 @@ main{
 
     try {
       const binary = atob(base64);
+
       const sampleCount = Math.floor(binary.length / 2);
+
       const samples = new Int16Array(sampleCount);
 
       const view = new DataView(
@@ -1299,6 +1628,7 @@ main{
       }
 
       const source = state.liveAudioContext.createBufferSource();
+
       source.buffer = buffer;
       source.connect(state.liveAudioContext.destination);
 
@@ -1308,6 +1638,7 @@ main{
       );
 
       source.start(startAt);
+
       state.liveNextPlayTime = startAt + buffer.duration;
 
       state.liveSources.push(source);
@@ -1343,6 +1674,7 @@ main{
     const pcm = new Int16Array(resampled.length);
 
     for (let i = 0; i < resampled.length; i++) {
+
       const sample = Math.max(-1,Math.min(1,resampled[i]));
 
       pcm[i] = sample < 0
@@ -1376,6 +1708,7 @@ main{
     });
 
     state.liveAudioContext = new AudioContext();
+
     await state.liveAudioContext.resume();
 
     state.liveSource =
@@ -1391,17 +1724,22 @@ main{
       );
 
     state.liveMute = state.liveAudioContext.createGain();
+
     state.liveMute.gain.value = 0;
 
     state.liveProcessor.onaudioprocess = event => {
+
       if (!state.liveActive || !state.liveReady) return;
 
       const data = event.inputBuffer.getChannelData(0);
+
       liveSendAudio(new Float32Array(data));
     };
 
     state.liveSource.connect(state.liveProcessor);
+
     state.liveProcessor.connect(state.liveMute);
+
     state.liveMute.connect(state.liveAudioContext.destination);
   }
 
@@ -1420,13 +1758,16 @@ main{
 
     state.liveActive = true;
     state.liveReady = false;
+
     state.liveUserTranscript = "";
     state.liveAssistantTranscript = "";
 
     $("voice-mic").textContent = "⏹ Ukončit LIVE";
+
     liveStatusText("Získávám bezpečný LIVE token…");
 
     try {
+
       const tokenData = await api("live-token");
 
       if (!tokenData.token) {
@@ -1442,16 +1783,20 @@ main{
         encodeURIComponent(tokenData.token);
 
       const socket = new WebSocket(url);
+
       state.liveSocket = socket;
 
       state.liveSetupTimer = setTimeout(() => {
+
         if (state.liveActive && !state.liveReady) {
           liveStatusText("LIVE se nepodařilo nastavit včas.");
           stopLiveVoice();
         }
+
       }, 20000);
 
       socket.onopen = () => {
+
         if (!state.liveActive) return;
 
         liveStatusText("Nastavuji AntZadEn LIVE…");
@@ -1459,8 +1804,10 @@ main{
         socket.send(JSON.stringify({
           setup:{
             model:"models/gemini-3.1-flash-live-preview",
+
             generationConfig:{
               responseModalities:["AUDIO"],
+
               speechConfig:{
                 voiceConfig:{
                   prebuiltVoiceConfig:{
@@ -1469,6 +1816,7 @@ main{
                 }
               }
             },
+
             systemInstruction:{
               parts:[{
                 text:
@@ -1480,6 +1828,7 @@ main{
                   "Pokud uživatel mluví česky, odpovídej česky."
               }]
             },
+
             inputAudioTranscription:{},
             outputAudioTranscription:{}
           }
@@ -1487,9 +1836,11 @@ main{
       };
 
       socket.onmessage = async event => {
+
         if (!state.liveActive) return;
 
         try {
+
           const data = JSON.parse(event.data);
 
           if (data.error) {
@@ -1499,6 +1850,7 @@ main{
           }
 
           if (data.setupComplete) {
+
             clearTimeout(state.liveSetupTimer);
             state.liveSetupTimer = null;
 
@@ -1509,11 +1861,14 @@ main{
             if (!state.liveActive) return;
 
             state.liveReady = true;
+
             liveStatusText("🟢 LIVE – můžeš mluvit");
+
             return;
           }
 
           const content = data.serverContent;
+
           if (!content) return;
 
           if (content.inputTranscription?.text) {
@@ -1533,6 +1888,7 @@ main{
           const parts = content.modelTurn?.parts || [];
 
           for (const part of parts) {
+
             if (
               part.inlineData?.data &&
               part.inlineData.mimeType?.startsWith("audio/")
@@ -1542,6 +1898,7 @@ main{
           }
 
           if (content.turnComplete) {
+
             const userText =
               state.liveUserTranscript.trim();
 
@@ -1552,6 +1909,7 @@ main{
             state.liveAssistantTranscript = "";
 
             if (userText) {
+
               addMessage(userText, true);
 
               saveLocalMessage("user",userText).catch(error => {
@@ -1560,6 +1918,7 @@ main{
             }
 
             if (assistantText) {
+
               addMessage(assistantText, false);
 
               saveLocalMessage("assistant",assistantText).catch(error => {
@@ -1571,28 +1930,38 @@ main{
           }
 
         } catch (error) {
+
           console.error("Zpracování LIVE zprávy:",error);
+
           liveStatusText("Chyba LIVE: " + error.message);
         }
       };
 
       socket.onerror = () => {
+
         if (state.liveActive) {
           liveStatusText("Chyba LIVE spojení. Zkontroluj Worker a token.");
         }
       };
 
       socket.onclose = event => {
+
         if (state.liveActive) {
+
           const reason = event.reason || "Spojení bylo ukončeno.";
+
           stopLiveVoice();
+
           liveStatusText("LIVE ukončeno: " + reason);
         }
       };
 
     } catch (error) {
+
       console.error("AntZadEn LIVE:",error);
+
       await stopLiveVoice();
+
       liveStatusText("Chyba LIVE: " + error.message);
     }
   }
@@ -1609,9 +1978,11 @@ main{
     liveStopPlayback();
 
     const socket = state.liveSocket;
+
     state.liveSocket = null;
 
     if (socket) {
+
       socket.onclose = null;
       socket.onerror = null;
       socket.onmessage = null;
@@ -1627,35 +1998,47 @@ main{
     }
 
     if (state.liveProcessor) {
+
       state.liveProcessor.onaudioprocess = null;
+
       try {
         state.liveProcessor.disconnect();
       } catch {}
+
       state.liveProcessor = null;
     }
 
     if (state.liveSource) {
+
       try {
         state.liveSource.disconnect();
       } catch {}
+
       state.liveSource = null;
     }
 
     if (state.liveMute) {
+
       try {
         state.liveMute.disconnect();
       } catch {}
+
       state.liveMute = null;
     }
 
     if (state.liveStream) {
+
       state.liveStream.getTracks().forEach(track => track.stop());
+
       state.liveStream = null;
     }
 
     if (state.liveAudioContext) {
+
       const context = state.liveAudioContext;
+
       state.liveAudioContext = null;
+
       await context.close().catch(() => {});
     }
 
@@ -1668,6 +2051,7 @@ main{
 
   async function checkConnection() {
     try {
+
       const response = await fetch(WORKER_URL,{
         cache:"no-store"
       });
@@ -1718,6 +2102,7 @@ main{
   function showAdmin() {
     $("app").style.display = "none";
     $("admin-screen").style.display = "block";
+
     checkAdminSession();
   }
 
@@ -1728,12 +2113,15 @@ main{
 
   async function checkAdminSession() {
     if (!state.adminToken) {
+
       $("admin-login").style.display = "block";
       $("admin-dashboard").style.display = "none";
+
       return;
     }
 
     try {
+
       await adminRequest("admin-check");
 
       $("admin-login").style.display = "none";
@@ -1742,7 +2130,9 @@ main{
       await refreshAdminStatus();
 
     } catch {
+
       state.adminToken = "";
+
       sessionStorage.removeItem("antzaden_admin_token");
 
       $("admin-login").style.display = "block";
@@ -1752,6 +2142,7 @@ main{
 
   async function refreshAdminStatus() {
     try {
+
       const response = await fetch(WORKER_URL,{
         cache:"no-store"
       });
@@ -1768,6 +2159,7 @@ main{
         data.database ? "🟢 Připojena" : "🔴 Nepřipojena";
 
     } catch {
+
       $("admin-ai-status").textContent = "🔴 Nedostupná";
       $("admin-search-status").textContent = "🔴 Nedostupné";
       $("admin-db-status").textContent = "🔴 Nepřipojena";
@@ -1775,41 +2167,55 @@ main{
   }
 
   // ==========================================
-  // UDÁLOSTI – VŠECHNA ID JSOU OVĚŘENA
+  // UDÁLOSTI
   // ==========================================
 
   $("new-chat").addEventListener("click",createChat);
+
   $("refresh-chats").addEventListener("click",loadChats);
 
   $("form").addEventListener("submit",event => {
+
     event.preventDefault();
 
     const value = $("input").value.trim();
 
     if (value) {
+
       $("input").value = "";
+
       sendMessage(value);
     }
   });
 
   document.querySelectorAll(".quick button").forEach(button => {
+
     button.addEventListener("click",() => {
+
       $("input").value = button.dataset.question || "";
+
       $("form").requestSubmit();
     });
   });
 
   $("voice-mic").addEventListener("click",() => {
+
     if (state.liveActive) {
+
       stopLiveVoice();
+
       liveStatusText("LIVE vypnuto.");
+
     } else {
+
       startLiveVoice();
     }
   });
 
   $("voice-toggle").addEventListener("click",() => {
+
     state.liveOutputEnabled = !state.liveOutputEnabled;
+
     state.browserSpeechEnabled = state.liveOutputEnabled;
 
     $("voice-toggle").textContent =
@@ -1818,6 +2224,7 @@ main{
         : "🔇 Hlas: vypnutý";
 
     if (!state.liveOutputEnabled) {
+
       liveStopPlayback();
 
       if ("speechSynthesis" in window) {
@@ -1827,9 +2234,11 @@ main{
   });
 
   $("admin-login-button").addEventListener("click",async () => {
+
     $("admin-error").textContent = "Ověřuji...";
 
     try {
+
       const data = await adminRequest("admin-login",{
         password:$("admin-password").value
       });
@@ -1839,6 +2248,7 @@ main{
       }
 
       state.adminToken = data.token;
+
       sessionStorage.setItem(
         "antzaden_admin_token",
         state.adminToken
@@ -1850,6 +2260,7 @@ main{
       await checkAdminSession();
 
     } catch (error) {
+
       $("admin-error").textContent = error.message;
     }
   });
@@ -1857,11 +2268,14 @@ main{
   $("admin-refresh").addEventListener("click",refreshAdminStatus);
 
   $("admin-logout").addEventListener("click",() => {
+
     state.adminToken = "";
+
     sessionStorage.removeItem("antzaden_admin_token");
 
     $("admin-dashboard").style.display = "none";
     $("admin-login").style.display = "block";
+
     $("admin-error").textContent = "Byl jsi odhlášen.";
   });
 
@@ -1870,6 +2284,7 @@ main{
   });
 
   $("admin-back").addEventListener("click",() => {
+
     history.replaceState(
       null,
       "",
@@ -1880,9 +2295,13 @@ main{
   });
 
   function handleRoute() {
+
     if (location.hash === "#admin") {
+
       showAdmin();
+
     } else if ($("admin-screen").style.display === "block") {
+
       hideAdmin();
     }
   }
@@ -1894,11 +2313,13 @@ main{
   // ==========================================
 
   async function startApp() {
+
     if (!validatePage()) return;
 
     console.log("AntZadEn AI Assistant – verze 4.0.");
 
     handleRoute();
+
     await initializeGuest();
 
     setInterval(checkConnection,30000);
@@ -1908,5 +2329,6 @@ main{
 
 })();
 </script>
+
 </body>
 </html>
