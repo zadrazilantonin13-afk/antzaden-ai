@@ -274,7 +274,7 @@ return data;
 }
 
 async function loadPublicInfo(){
-const data=await api("public-info",{},false);
+const data=await api("public-state",{},false);
 const maintenanceScreen=$("maintenance-screen");
 if(data.maintenance){
 $("app").style.display="none";
@@ -874,7 +874,7 @@ $("admin-db-status").textContent="🔴 Nepřipojena";
 async function refreshAdminFeatures(){
 const stats=await adminRequest("admin-stats");
 $("admin-stat-messages").textContent=stats.stats.totalMessages;
-$("admin-stat-guests").textContent=stats.stats.totalGuests;
+$("admin-stat-guests").textContent=stats.stats.totalVisitors;
 $("admin-stat-chats").textContent=stats.stats.totalChats;
 $("admin-stat-today").textContent=stats.stats.messagesToday;
 const maintenance=await adminRequest("admin-maintenance-get");
