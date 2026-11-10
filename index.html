@@ -16,8 +16,8 @@ body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:A
 button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
 #app{height:100dvh;display:none}
 header{height:72px;padding:12px 20px;background:var(--panel);border-bottom:1px solid #26372c;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:42px;height:42px;flex-shrink:0;border-radius:14px;background:linear-gradient(135deg,#70f28e,#159b45);display:grid;place-items:center;color:#061109;font-size:23px;font-weight:bold}
 .brand h1{font-size:17px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:5px}
 .status{font-size:11px;color:var(--green)}.header-right{display:flex;align-items:center;gap:12px}
 .small-button{background:#17231a;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 12px;font-size:12px}
@@ -63,6 +63,14 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .voicebar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
 .voicebar button{background:#14251a;border:1px solid #35543c;color:#a6f5b8;border-radius:10px;padding:9px 13px}
 #voice-status{font-size:11px;color:var(--muted)}
+
+/* OZNÁMENÍ */
+#announcement-overlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(4,10,6,.97);align-items:center;justify-content:center;padding:24px;text-align:center}
+.announcement-card{width:100%;max-width:850px;padding:clamp(28px,5vw,55px) 25px;background:#101713;border:2px solid #55e879;border-radius:24px;box-shadow:0 0 70px rgba(85,232,121,.2);animation:announcementAppear .3s ease}
+.announcement-label{color:#55e879;font-size:12px;font-weight:bold;letter-spacing:3px;margin-bottom:20px}
+.announcement-message{color:#edf5ef;font-size:clamp(23px,4vw,42px);line-height:1.4;overflow-wrap:anywhere;white-space:pre-wrap}
+#header-announcement{display:none;max-width:min(38vw,420px);padding:8px 12px;background:#17291c;border:1px solid #55e879;border-radius:10px;color:#c9f5d2;font-size:12px;line-height:1.35;overflow-wrap:anywhere;white-space:pre-wrap}
+@keyframes announcementAppear{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .hint{text-align:center;color:#637268;font-size:10px;margin-top:10px}
 #admin-screen{display:none;min-height:100dvh;overflow:auto;padding:25px}
 .admin-wrap{max-width:750px;margin:20px auto}
@@ -76,12 +84,15 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 header{height:64px;padding:9px 12px}.brand h1{font-size:14px}.brand .logo{width:38px;height:38px}
 #layout{height:calc(100dvh - 64px)}#sidebar{width:190px;padding:9px}
 main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
+#header-announcement{max-width:140px;font-size:10px;padding:6px 8px}
 }
 @media(max-width:480px){
 #sidebar{width:145px;padding:7px}.chat-select{font-size:11px;padding:8px}
 .chat-rename,.chat-delete{padding:5px;font-size:13px}
 .new-chat{font-size:11px;padding:10px}.sidebar-title{font-size:9px}
 .header-right{gap:5px}.small-button{padding:8px;font-size:10px}
+#header-announcement{max-width:105px;font-size:9px;padding:5px}
+.brand{gap:7px}.brand h1{font-size:12px}.sub{font-size:10px}
 }
 </style>
 </head>
@@ -92,12 +103,20 @@ main{padding:10px 10px 0}.message{max-width:94%;font-size:13px}
 <div class="brand">
 <div class="logo">A</div>
 <div><h1>AntZadEn AI Assistant</h1><div class="sub">Tvůj osobní AI asistent</div></div>
+<div id="header-announcement" aria-live="polite"></div>
 </div>
 <div class="header-right">
 <span class="status" id="connection-status">● PŘIPOJUJI...</span>
 <button class="small-button" id="admin-open">⚙ Admin</button>
 </div>
 </header>
+
+<div id="announcement-overlay" role="alertdialog" aria-live="assertive" aria-modal="true">
+  <div class="announcement-card">
+    <div class="announcement-label">📢 ANTZADEN AI – OZNÁMENÍ</div>
+    <div id="announcement-overlay-message" class="announcement-message"></div>
+  </div>
+</div>
 
 <div id="layout">
 <aside id="sidebar">
@@ -236,7 +255,9 @@ const requiredIds=[
 "admin-maintenance-message","admin-maintenance-save",
 "admin-maintenance-status","admin-announcement-text",
 "admin-announcement-add","admin-announcements-list",
-"public-notices","maintenance-screen","maintenance-message"
+"public-notices","maintenance-screen","maintenance-message",
+"announcement-overlay","announcement-overlay-message",
+"header-announcement"
 ];
 
 function validatePage(){
@@ -273,47 +294,137 @@ if(!response.ok||data.error)throw new Error(data.error||"Chyba serveru "+respons
 return data;
 }
 
+// OZNÁMENÍ – 6 SEKUND CELOOBRAZOVKOVĚ + 10 SEKUND V HLAVIČCE
+const announcementQueue=[];
+let announcementActive=false;
+let announcementFirstLoad=true;
+let announcementSeen=new Set();
+
+try{
+const saved=JSON.parse(localStorage.getItem("antzaden_seen_announcements")||"[]");
+if(Array.isArray(saved))announcementSeen=new Set(saved.map(String));
+}catch{}
+
+function queueAnnouncement(message){
+const clean=String(message||"").trim();
+if(!clean)return;
+announcementQueue.push(clean);
+if(!announcementActive)showNextAnnouncement();
+}
+
+function showNextAnnouncement(){
+if(announcementQueue.length===0){
+announcementActive=false;
+return;
+}
+
+announcementActive=true;
+
+const message=announcementQueue.shift();
+const overlay=$("announcement-overlay");
+const overlayMessage=$("announcement-overlay-message");
+const headerMessage=$("header-announcement");
+
+overlayMessage.textContent=message;
+overlay.style.display="flex";
+
+setTimeout(()=>{
+overlay.style.display="none";
+
+headerMessage.textContent="📢 "+message;
+headerMessage.style.display="block";
+
+setTimeout(()=>{
+headerMessage.style.display="none";
+announcementActive=false;
+showNextAnnouncement();
+},10000);
+
+},6000);
+}
+
+function rememberAnnouncement(id){
+announcementSeen.add(String(id));
+const saved=Array.from(announcementSeen).slice(-100);
+announcementSeen=new Set(saved);
+
+try{
+localStorage.setItem("antzaden_seen_announcements",JSON.stringify(saved));
+}catch{}
+}
+
 async function loadPublicInfo(){
 const data=await api("public-state",{},false);
 const maintenanceScreen=$("maintenance-screen");
+
 if(data.maintenance){
 $("app").style.display="none";
 if(location.hash!=="#admin"){
 maintenanceScreen.style.display="flex";
 $("maintenance-message").textContent=data.maintenanceMessage||"AntZadEn AI je dočasně v údržbě.";
 }
-}else maintenanceScreen.style.display="none";
+}else{
+maintenanceScreen.style.display="none";
+}
 
-const notices=$("public-notices");
 const items=Array.isArray(data.announcements)?data.announcements:[];
-notices.innerHTML="";
-if(items.length&&!data.maintenance){
-notices.style.display="block";
-items.forEach(item=>{
-const line=document.createElement("div");
-line.textContent="📢 "+item.message;
-line.style.padding="3px 0";
-notices.appendChild(line);
+const now=Date.now();
+
+if(announcementFirstLoad){
+// Při prvním načtení zobrazíme pouze čerstvá oznámení, ne starou historii.
+items.slice().reverse().forEach(item=>{
+const id=String(item.id||"");
+const created=Date.parse(item.created_at||"");
+const recent=Number.isFinite(created)&&now>=created&&now-created<=120000;
+
+if(id&&!announcementSeen.has(id)){
+rememberAnnouncement(id);
+if(item.message&&recent)queueAnnouncement(item.message);
+}
 });
-}else notices.style.display="none";
+
+announcementFirstLoad=false;
+
+}else{
+// Při dalších kontrolách přidáme pouze nová oznámení.
+items.slice().reverse().forEach(item=>{
+const id=String(item.id||"");
+
+if(id&&item.message&&!announcementSeen.has(id)){
+rememberAnnouncement(id);
+queueAnnouncement(item.message);
+}
+});
+}
+
+$("public-notices").style.display="none";
 return data;
 }
 
 async function initializeGuest(){
 setConnection("● PŘIPOJUJI...");
+
 try{
 const publicInfo=await loadPublicInfo();
+
 if(publicInfo.maintenance&&location.hash!=="#admin")return;
+
 const data=await api("guest-init",{},false);
 if(!data.token)throw new Error("Server nevydal anonymní token.");
+
 state.token=data.token;
 localStorage.setItem("antzaden_guest_token",state.token);
+
 if(location.hash!=="#admin")$("app").style.display="block";
+
 await loadChats();
 await checkConnection();
+
 }catch(error){
 console.error("Inicializace AntZadEn AI:",error);
+
 if(location.hash!=="#admin")$("app").style.display="block";
+
 setConnection("● CHYBA","#ff7777");
 $("chat-list").textContent="Nepodařilo se připojit.";
 clearChatView();
@@ -335,37 +446,91 @@ return html.replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*(.+?)\*\*/g,"<s
 function renderMarkdown(text){
 const lines=String(text).split("\n");
 let html="",paragraph=[],list="",code=false,codeLines=[];
+
 function flush(){
-if(paragraph.length){html+="<p>"+paragraph.map(inlineMarkdown).join("<br>")+"</p>";paragraph=[];}
+if(paragraph.length){
+html+="<p>"+paragraph.map(inlineMarkdown).join("<br>")+"</p>";
+paragraph=[];
 }
+}
+
 function closeList(){
-if(list){html+=list==="ul"?"</ul>":"</ol>";list="";}
+if(list){
+html+=list==="ul"?"</ul>":"</ol>";
+list="";
 }
+}
+
 for(const line of lines){
 if(line.trim().startsWith("```")){
-flush();closeList();
-if(code){html+="<pre><code>"+escapeHTML(codeLines.join("\n"))+"</code></pre>";codeLines=[];code=false;}
-else code=true;
+flush();
+closeList();
+
+if(code){
+html+="<pre><code>"+escapeHTML(codeLines.join("\n"))+"</code></pre>";
+codeLines=[];
+code=false;
+}else{
+code=true;
+}
 continue;
 }
-if(code){codeLines.push(line);continue;}
+
+if(code){
+codeLines.push(line);
+continue;
+}
+
 let match=line.match(/^(#{1,3})\s+(.+)$/);
-if(match){flush();closeList();const n=match[1].length;html+=`<h${n}>${inlineMarkdown(match[2])}</h${n}>`;continue;}
+
+if(match){
+flush();
+closeList();
+const n=match[1].length;
+html+=`<h${n}>${inlineMarkdown(match[2])}</h${n}>`;
+continue;
+}
+
 match=line.match(/^\s*[-*]\s+(.+)$/);
 const numbered=line.match(/^\s*\d+[.)]\s+(.+)$/);
+
 if(match||numbered){
-flush();const type=match?"ul":"ol";
-if(list!==type){closeList();html+=type==="ul"?"<ul>":"<ol>";list=type;}
+flush();
+const type=match?"ul":"ol";
+
+if(list!==type){
+closeList();
+html+=type==="ul"?"<ul>":"<ol>";
+list=type;
+}
+
 html+="<li>"+inlineMarkdown((match||numbered)[1])+"</li>";
 continue;
 }
+
 match=line.match(/^\s*>\s?(.*)$/);
-if(match){flush();closeList();html+="<blockquote>"+inlineMarkdown(match[1])+"</blockquote>";continue;}
-if(!line.trim()){flush();closeList();continue;}
-closeList();paragraph.push(line);
+
+if(match){
+flush();
+closeList();
+html+="<blockquote>"+inlineMarkdown(match[1])+"</blockquote>";
+continue;
 }
+
+if(!line.trim()){
+flush();
+closeList();
+continue;
+}
+
+closeList();
+paragraph.push(line);
+}
+
 if(code)html+="<pre><code>"+escapeHTML(codeLines.join("\n"))+"</code></pre>";
-flush();closeList();return html;
+flush();
+closeList();
+return html;
 }
 
 // CHATOVACÍ OKNO
@@ -380,85 +545,155 @@ $("chat").appendChild(indicator);
 function addMessage(text,isUser=false){
 const box=document.createElement("div");
 box.className="message "+(isUser?"user":"bot");
+
 if(!isUser){
 const name=document.createElement("div");
-name.className="botname";name.textContent="ANTZADEN AI";box.appendChild(name);
+name.className="botname";
+name.textContent="ANTZADEN AI";
+box.appendChild(name);
 }
+
 const content=document.createElement("div");
-if(isUser)content.textContent=text;
-else{content.className="markdown";content.innerHTML=renderMarkdown(text);}
-box.appendChild(content);
-const typing=$("typing");
-if(typing&&typing.parentNode===$("chat"))$("chat").insertBefore(box,typing);
-else $("chat").appendChild(box);
-scrollDown();return content;
+
+if(isUser){
+content.textContent=text;
+}else{
+content.className="markdown";
+content.innerHTML=renderMarkdown(text);
 }
-function scrollDown(){$("chat").scrollTop=$("chat").scrollHeight;}
+
+box.appendChild(content);
+
+const typing=$("typing");
+
+if(typing&&typing.parentNode===$("chat")){
+$("chat").insertBefore(box,typing);
+}else{
+$("chat").appendChild(box);
+}
+
+scrollDown();
+return content;
+}
+
+function scrollDown(){
+$("chat").scrollTop=$("chat").scrollHeight;
+}
 
 async function typeAnswer(element,text){
-const chars=Array.from(String(text));element.textContent="";
+const chars=Array.from(String(text));
+element.textContent="";
+
 for(let i=0;i<chars.length;i+=4){
 element.textContent=chars.slice(0,i+4).join("");
-scrollDown();await new Promise(resolve=>setTimeout(resolve,8));
+scrollDown();
+await new Promise(resolve=>setTimeout(resolve,8));
 }
-element.innerHTML=renderMarkdown(text);scrollDown();
+
+element.innerHTML=renderMarkdown(text);
+scrollDown();
 }
 
 // CHATY
 function makeChatRow(item){
-const row=document.createElement("div");row.className="chat-item";
+const row=document.createElement("div");
+row.className="chat-item";
+
 const button=document.createElement("button");
 button.className="chat-select"+(item.id===state.currentChatId?" active":"");
-button.textContent=item.title||"Nový chat";button.title=item.title||"Nový chat";
+button.textContent=item.title||"Nový chat";
+button.title=item.title||"Nový chat";
 button.onclick=()=>openChat(item.id);
 
 const rename=document.createElement("button");
-rename.className="chat-rename";rename.textContent="✎";rename.title="Přejmenovat chat";
+rename.className="chat-rename";
+rename.textContent="✎";
+rename.title="Přejmenovat chat";
+
 rename.onclick=async()=>{
 const newTitle=prompt("Zadej nový název chatu:",item.title||"Nový chat");
 if(newTitle===null)return;
+
 const title=newTitle.trim();
-if(!title){alert("Název chatu nesmí být prázdný.");return;}
+
+if(!title){
+alert("Název chatu nesmí být prázdný.");
+return;
+}
+
 try{
 await api("chat-rename",{chatId:item.id,title:title.slice(0,100)});
 await loadChatsListOnly();
-}catch(error){alert("Chat se nepodařilo přejmenovat: "+error.message);}
+}catch(error){
+alert("Chat se nepodařilo přejmenovat: "+error.message);
+}
 };
 
 const del=document.createElement("button");
-del.className="chat-delete";del.textContent="×";del.title="Smazat chat";
+del.className="chat-delete";
+del.textContent="×";
+del.title="Smazat chat";
+
 del.onclick=async()=>{
 if(!confirm("Opravdu chceš tento chat smazat?"))return;
+
 try{
 await api("chat-delete",{chatId:item.id});
+
 if(state.currentChatId===item.id)state.currentChatId=null;
+
 await loadChats();
-}catch(error){alert("Chat se nepodařilo smazat: "+error.message);}
+}catch(error){
+alert("Chat se nepodařilo smazat: "+error.message);
+}
 };
-row.append(button,rename,del);return row;
+
+row.append(button,rename,del);
+return row;
 }
 
 async function loadChatsListOnly(){
-const data=await api("chats-list");const list=$("chat-list");list.innerHTML="";
+const data=await api("chats-list");
+const list=$("chat-list");
+list.innerHTML="";
+
 (data.chats||[]).forEach(item=>list.appendChild(makeChatRow(item)));
+
 if(!data.chats?.length){
-const p=document.createElement("div");p.className="sub";
-p.textContent="Zatím nemáš žádné chaty.";list.appendChild(p);
+const p=document.createElement("div");
+p.className="sub";
+p.textContent="Zatím nemáš žádné chaty.";
+list.appendChild(p);
 }
 }
 
 async function loadChats(){
-const list=$("chat-list");list.innerHTML="<div class='sub'>Načítám chaty...</div>";
+const list=$("chat-list");
+list.innerHTML="<div class='sub'>Načítám chaty...</div>";
+
 try{
-const data=await api("chats-list");const chats=data.chats||[];
-list.innerHTML="";chats.forEach(item=>list.appendChild(makeChatRow(item)));
+const data=await api("chats-list");
+const chats=data.chats||[];
+
+list.innerHTML="";
+chats.forEach(item=>list.appendChild(makeChatRow(item)));
+
 if(chats.length){
 const currentExists=chats.some(item=>item.id===state.currentChatId);
-if(!currentExists)await openChat(chats[0].id);
-else await openChat(state.currentChatId);
-}else await createChat();
+
+if(!currentExists){
+await openChat(chats[0].id);
+}else{
+await openChat(state.currentChatId);
+}
+
+}else{
+await createChat();
+}
+
 }catch(error){
-list.textContent="Chyba: "+error.message;clearChatView();
+list.textContent="Chyba: "+error.message;
+clearChatView();
 addMessage("Nepodařilo se načíst chaty: "+error.message,false);
 }
 }
@@ -466,29 +701,53 @@ addMessage("Nepodařilo se načíst chaty: "+error.message,false);
 async function createChat(){
 try{
 const data=await api("chat-create");
+
 if(!data.chat?.id)throw new Error("Server nevrátil ID nového chatu.");
+
 state.currentChatId=data.chat.id;
 clearChatView();
+
 addMessage("Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Nemusíš se registrovat ani přihlašovat. Zeptej se mě na cokoliv!",false);
+
 await loadChatsListOnly();
+
 }catch(error){
-clearChatView();addMessage("Nepodařilo se vytvořit chat: "+error.message,false);
+clearChatView();
+addMessage("Nepodařilo se vytvořit chat: "+error.message,false);
 }
 }
 
 async function openChat(chatId){
-state.currentChatId=chatId;clearChatView();
+state.currentChatId=chatId;
+clearChatView();
+
 try{
-const data=await api("chat-get",{chatId});clearChatView();
-if(!data.messages?.length)addMessage("Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!",false);
-else data.messages.forEach(message=>addMessage(message.content,message.role==="user"));
-await loadChatsListOnly();scrollDown();
-}catch(error){addMessage("Nepodařilo se načíst chat: "+error.message,false);}
+const data=await api("chat-get",{chatId});
+clearChatView();
+
+if(!data.messages?.length){
+addMessage("Ahoj! 👋 Jsem **AntZadEn AI Assistant**. Zeptej se mě na cokoliv!",false);
+}else{
+data.messages.forEach(message=>addMessage(message.content,message.role==="user"));
+}
+
+await loadChatsListOnly();
+scrollDown();
+
+}catch(error){
+addMessage("Nepodařilo se načíst chat: "+error.message,false);
+}
 }
 
 async function saveLocalMessage(role,content){
 if(!state.currentChatId||!String(content||"").trim())return;
-await api("chat-save-message",{chatId:state.currentChatId,role,content:String(content).trim()});
+
+await api("chat-save-message",{
+chatId:state.currentChatId,
+role,
+content:String(content).trim()
+});
+
 await loadChatsListOnly();
 }
 
@@ -508,45 +767,100 @@ async function getDeviceLocation(){
 if(navigator.geolocation){
 try{
 const position=await new Promise((resolve,reject)=>{
-navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:6500,maximumAge:300000});
+navigator.geolocation.getCurrentPosition(resolve,reject,{
+timeout:6500,
+maximumAge:300000
 });
-return {latitude:position.coords.latitude,longitude:position.coords.longitude,name:"Poloha zařízení"};
-}catch(error){console.warn("GPS nedostupná:",error);}
+});
+
+return {
+latitude:position.coords.latitude,
+longitude:position.coords.longitude,
+name:"Poloha zařízení"
+};
+
+}catch(error){
+console.warn("GPS nedostupná:",error);
 }
+}
+
 try{
 const response=await fetch("https://ipapi.co/json/");
+
 if(!response.ok)throw new Error("Poloha podle IP není dostupná.");
+
 const data=await response.json();
-if(data.latitude!=null&&data.longitude!=null)return {latitude:data.latitude,longitude:data.longitude,name:data.city||"Přibližná poloha"};
-}catch(error){console.warn("IP poloha:",error);}
+
+if(data.latitude!=null&&data.longitude!=null){
+return {
+latitude:data.latitude,
+longitude:data.longitude,
+name:data.city||"Přibližná poloha"
+};
+}
+
+}catch(error){
+console.warn("IP poloha:",error);
+}
+
 const city=prompt("Poloha není dostupná. Zadej město:");
 if(!city)throw new Error("Nebyla zadána poloha.");
+
 const response=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=1&language=cs&format=json");
+
 if(!response.ok)throw new Error("Vyhledání města se nezdařilo.");
+
 const data=await response.json();
+
 if(!data.results?.length)throw new Error("Město nebylo nalezeno.");
-return {latitude:data.results[0].latitude,longitude:data.results[0].longitude,name:data.results[0].name};
+
+return {
+latitude:data.results[0].latitude,
+longitude:data.results[0].longitude,
+name:data.results[0].name
+};
 }
 
 async function getWeather(query){
 const location=await getDeviceLocation();
-const date=new Date();date.setHours(0,0,0,0);
+
+const date=new Date();
+date.setHours(0,0,0,0);
+
 const q=query.toLowerCase();
-if(q.includes("pozítří"))date.setDate(date.getDate()+2);
-else if(q.includes("zítra"))date.setDate(date.getDate()+1);
-const today=new Date();today.setHours(0,0,0,0);
+
+if(q.includes("pozítří")){
+date.setDate(date.getDate()+2);
+}else if(q.includes("zítra")){
+date.setDate(date.getDate()+1);
+}
+
+const today=new Date();
+today.setHours(0,0,0,0);
+
 const days=Math.round((date-today)/86400000);
+
 if(days<0||days>15)return "Předpověď pro tento den zatím není dostupná.";
+
 const iso=date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+
 const params=new URLSearchParams({
-latitude:location.latitude,longitude:location.longitude,
+latitude:location.latitude,
+longitude:location.longitude,
 daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-timezone:"auto",forecast_days:"16"
+timezone:"auto",
+forecast_days:"16"
 });
+
 const response=await fetch("https://api.open-meteo.com/v1/forecast?"+params);
+
 if(!response.ok)throw new Error("Počasí se nepodařilo načíst.");
-const data=await response.json();const index=data.daily.time.indexOf(iso);
+
+const data=await response.json();
+const index=data.daily.time.indexOf(iso);
+
 if(index<0)return "Předpověď není dostupná.";
+
 return `## 🌤️ Počasí
 
 **📍 Místo:** ${location.name}
@@ -561,133 +875,239 @@ return `## 🌤️ Počasí
 
 async function getLocalAnswer(query){
 const q=query.toLowerCase();
-if(q.includes("kolik je hodin"))return "Právě je **"+new Date().toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})+"** podle času tvého zařízení.";
-if(q.includes("počasí")||q.includes("předpověď")||q.includes("teplota"))return await getWeather(query);
+
+if(q.includes("kolik je hodin")){
+return "Právě je **"+new Date().toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})+"** podle času tvého zařízení.";
+}
+
+if(q.includes("počasí")||q.includes("předpověď")||q.includes("teplota")){
+return await getWeather(query);
+}
+
 return null;
 }
 
 // BĚŽNÝ HLASOVÝ VÝSTUP
 function speakAnswer(text){
 if(state.liveActive||!state.browserSpeechEnabled||!("speechSynthesis" in window))return;
+
 window.speechSynthesis.cancel();
+
 const cleanText=String(text).replace(/[#*_`]/g," ").replace(/\[([^\]]+)\]\([^)]+\)/g,"$1");
+
 const utterance=new SpeechSynthesisUtterance(cleanText);
-utterance.lang="cs-CZ";utterance.rate=1;utterance.pitch=0.9;
+utterance.lang="cs-CZ";
+utterance.rate=1;
+utterance.pitch=0.9;
+
 const voices=window.speechSynthesis.getVoices();
 const czechVoice=voices.find(voice=>voice.lang.toLowerCase().startsWith("cs"));
+
 if(czechVoice)utterance.voice=czechVoice;
+
 window.speechSynthesis.speak(utterance);
 }
 
 // ODESÍLÁNÍ ZPRÁV
 async function sendMessage(query){
 if(state.busy||!query.trim())return;
-if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
-state.busy=true;$("send").disabled=true;$("input").disabled=true;
-addMessage(query,true);$("typing").style.display="flex";scrollDown();
+
+if(!state.currentChatId){
+await createChat();
+if(!state.currentChatId)return;
+}
+
+state.busy=true;
+$("send").disabled=true;
+$("input").disabled=true;
+
+addMessage(query,true);
+$("typing").style.display="flex";
+scrollDown();
+
 try{
 let answer=await getLocalAnswer(query);
+
 if(answer!==null){
-await api("chat-save-message",{chatId:state.currentChatId,role:"user",content:query});
-await api("chat-save-message",{chatId:state.currentChatId,role:"assistant",content:answer});
+await api("chat-save-message",{
+chatId:state.currentChatId,
+role:"user",
+content:query
+});
+
+await api("chat-save-message",{
+chatId:state.currentChatId,
+role:"assistant",
+content:answer
+});
+
 }else{
-const data=await api("chat-send",{chatId:state.currentChatId,message:query});
+const data=await api("chat-send",{
+chatId:state.currentChatId,
+message:query
+});
+
 answer=data.reply;
 }
+
 if(!answer)throw new Error("Server nevrátil text odpovědi.");
+
 $("typing").style.display="none";
+
 const target=addMessage("",false);
 await typeAnswer(target,answer);
+
 speakAnswer(answer);
 await loadChatsListOnly();
+
 }catch(error){
 $("typing").style.display="none";
 addMessage("Nepodařilo se získat odpověď.\n\n"+error.message,false);
 console.error("Odeslání zprávy:",error);
+
 }finally{
-state.busy=false;$("send").disabled=false;$("input").disabled=false;$("input").focus();scrollDown();
+state.busy=false;
+$("send").disabled=false;
+$("input").disabled=false;
+$("input").focus();
+scrollDown();
 }
 }
 
 // GEMINI LIVE – HLASOVÝ REŽIM
-function liveStatusText(text){$("voice-status").textContent=text;}
+function liveStatusText(text){
+$("voice-status").textContent=text;
+}
 
 function liveBase64(bytes){
-let binary="";const chunk=0x8000;
-for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+let binary="";
+const chunk=0x8000;
+
+for(let i=0;i<bytes.length;i+=chunk){
+binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+}
+
 return btoa(binary);
 }
 
 function liveResample(inputData,fromRate,toRate){
 if(fromRate===toRate)return inputData;
+
 const ratio=fromRate/toRate;
 const length=Math.floor(inputData.length/ratio);
 const output=new Float32Array(length);
+
 for(let i=0;i<length;i++){
 const start=Math.floor(i*ratio);
 const end=Math.min(Math.floor((i+1)*ratio),inputData.length);
-let sum=0;for(let j=start;j<end;j++)sum+=inputData[j];
+let sum=0;
+
+for(let j=start;j<end;j++)sum+=inputData[j];
+
 output[i]=sum/Math.max(1,end-start);
 }
+
 return output;
 }
 
 function liveStopPlayback(){
-state.liveSources.forEach(source=>{try{source.stop();}catch{}});
+state.liveSources.forEach(source=>{
+try{source.stop();}catch{}
+});
+
 state.liveSources=[];
-if(state.liveAudioContext)state.liveNextPlayTime=state.liveAudioContext.currentTime;
+
+if(state.liveAudioContext){
+state.liveNextPlayTime=state.liveAudioContext.currentTime;
+}
 }
 
 function livePlayAudio(base64){
 if(!state.liveOutputEnabled||!state.liveAudioContext)return;
+
 try{
 const binary=atob(base64);
 const sampleCount=Math.floor(binary.length/2);
 const samples=new Int16Array(sampleCount);
 const view=new DataView(new Uint8Array(Array.from(binary,char=>char.charCodeAt(0))).buffer);
-for(let i=0;i<sampleCount;i++)samples[i]=view.getInt16(i*2,true);
+
+for(let i=0;i<sampleCount;i++){
+samples[i]=view.getInt16(i*2,true);
+}
+
 const buffer=state.liveAudioContext.createBuffer(1,samples.length,24000);
 const channel=buffer.getChannelData(0);
-for(let i=0;i<samples.length;i++)channel[i]=samples[i]/32768;
+
+for(let i=0;i<samples.length;i++){
+channel[i]=samples[i]/32768;
+}
+
 const source=state.liveAudioContext.createBufferSource();
-source.buffer=buffer;source.connect(state.liveAudioContext.destination);
+source.buffer=buffer;
+source.connect(state.liveAudioContext.destination);
+
 const startAt=Math.max(state.liveAudioContext.currentTime,state.liveNextPlayTime);
-source.start(startAt);state.liveNextPlayTime=startAt+buffer.duration;
+
+source.start(startAt);
+state.liveNextPlayTime=startAt+buffer.duration;
 state.liveSources.push(source);
-source.onended=()=>{state.liveSources=state.liveSources.filter(item=>item!==source);};
-}catch(error){console.error("Přehrání LIVE audia:",error);}
+
+source.onended=()=>{
+state.liveSources=state.liveSources.filter(item=>item!==source);
+};
+
+}catch(error){
+console.error("Přehrání LIVE audia:",error);
+}
 }
 
 function liveSendAudio(floatData){
 const socket=state.liveSocket;
+
 if(!socket||socket.readyState!==WebSocket.OPEN||!state.liveReady||!state.liveAudioContext)return;
+
 const resampled=liveResample(floatData,state.liveAudioContext.sampleRate,16000);
 const pcm=new Int16Array(resampled.length);
+
 for(let i=0;i<resampled.length;i++){
 const sample=Math.max(-1,Math.min(1,resampled[i]));
 pcm[i]=sample<0?sample*32768:sample*32767;
 }
-socket.send(JSON.stringify({realtimeInput:{audio:{
+
+socket.send(JSON.stringify({
+realtimeInput:{
+audio:{
 data:liveBase64(new Uint8Array(pcm.buffer,pcm.byteOffset,pcm.byteLength)),
 mimeType:"audio/pcm;rate=16000"
-}}}));
+}
+}
+}));
 }
 
 async function liveStartMicrophone(){
 state.liveStream=await navigator.mediaDevices.getUserMedia({
-audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
+audio:{
+echoCancellation:true,
+noiseSuppression:true,
+autoGainControl:true
+}
 });
+
 state.liveAudioContext=new AudioContext();
 await state.liveAudioContext.resume();
+
 state.liveSource=state.liveAudioContext.createMediaStreamSource(state.liveStream);
 state.liveProcessor=state.liveAudioContext.createScriptProcessor(4096,1,1);
 state.liveMute=state.liveAudioContext.createGain();
 state.liveMute.gain.value=0;
+
 state.liveProcessor.onaudioprocess=event=>{
 if(!state.liveActive||!state.liveReady)return;
+
 const data=event.inputBuffer.getChannelData(0);
 liveSendAudio(new Float32Array(data));
 };
+
 state.liveSource.connect(state.liveProcessor);
 state.liveProcessor.connect(state.liveMute);
 state.liveMute.connect(state.liveAudioContext.destination);
@@ -695,85 +1115,155 @@ state.liveMute.connect(state.liveAudioContext.destination);
 
 async function startLiveVoice(){
 if(state.liveActive)return;
-if(!navigator.mediaDevices?.getUserMedia){liveStatusText("Mikrofon vyžaduje HTTPS.");return;}
-if(!window.WebSocket){liveStatusText("Tento prohlížeč nepodporuje LIVE spojení.");return;}
-state.liveActive=true;state.liveReady=false;
-state.liveUserTranscript="";state.liveAssistantTranscript="";
+
+if(!navigator.mediaDevices?.getUserMedia){
+liveStatusText("Mikrofon vyžaduje HTTPS.");
+return;
+}
+
+if(!window.WebSocket){
+liveStatusText("Tento prohlížeč nepodporuje LIVE spojení.");
+return;
+}
+
+state.liveActive=true;
+state.liveReady=false;
+state.liveUserTranscript="";
+state.liveAssistantTranscript="";
+
 $("voice-mic").textContent="⏹ Ukončit LIVE";
 liveStatusText("Získávám bezpečný LIVE token…");
+
 try{
 const tokenData=await api("live-token");
+
 if(!tokenData.token)throw new Error("Server nevydal hlasový token.");
 if(!state.liveActive)return;
+
 const url="wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token="+encodeURIComponent(tokenData.token);
-const socket=new WebSocket(url);state.liveSocket=socket;
+
+const socket=new WebSocket(url);
+state.liveSocket=socket;
+
 state.liveSetupTimer=setTimeout(()=>{
-if(state.liveActive&&!state.liveReady){liveStatusText("LIVE se nepodařilo nastavit včas.");stopLiveVoice();}
+if(state.liveActive&&!state.liveReady){
+liveStatusText("LIVE se nepodařilo nastavit včas.");
+stopLiveVoice();
+}
 },20000);
 
 socket.onopen=()=>{
 if(!state.liveActive)return;
+
 liveStatusText("Nastavuji AntZadEn LIVE…");
+
 socket.send(JSON.stringify({
 setup:{
 model:"models/gemini-3.1-flash-live-preview",
 generationConfig:{
 responseModalities:["AUDIO"],
-speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Charon"}}}
+speechConfig:{
+voiceConfig:{
+prebuiltVoiceConfig:{voiceName:"Charon"}
+}
+}
 },
-systemInstruction:{parts:[{text:"Jsi AntZadEn AI Assistant. Mluv přirozeně a přátelsky česky. Jsi hlasový asistent. Odpovídej jasně, srozumitelně a přirozeně. Neodpovídej zbytečně dlouze. Pokud uživatel mluví česky, odpovídej česky."}]},
-inputAudioTranscription:{},outputAudioTranscription:{}
+systemInstruction:{
+parts:[{
+text:"Jsi AntZadEn AI Assistant. Mluv přirozeně a přátelsky česky. Jsi hlasový asistent. Odpovídej jasně, srozumitelně a přirozeně. Neodpovídej zbytečně dlouze. Pokud uživatel mluví česky, odpovídej česky."
+}]
+},
+inputAudioTranscription:{},
+outputAudioTranscription:{}
 }
 }));
 };
 
 socket.onmessage=async event=>{
 if(!state.liveActive)return;
+
 try{
 const data=JSON.parse(event.data);
-if(data.error)throw new Error(data.error.message||"Chyba Gemini LIVE.");
+
+if(data.error){
+throw new Error(data.error.message||"Chyba Gemini LIVE.");
+}
+
 if(data.setupComplete){
-clearTimeout(state.liveSetupTimer);state.liveSetupTimer=null;
+clearTimeout(state.liveSetupTimer);
+state.liveSetupTimer=null;
+
 liveStatusText("Spouštím mikrofon…");
 await liveStartMicrophone();
+
 if(!state.liveActive)return;
-state.liveReady=true;liveStatusText("🟢 LIVE – můžeš mluvit");return;
+
+state.liveReady=true;
+liveStatusText("🟢 LIVE – můžeš mluvit");
+return;
 }
-const content=data.serverContent;if(!content)return;
-if(content.inputTranscription?.text)state.liveUserTranscript+=content.inputTranscription.text;
-if(content.outputTranscription?.text)state.liveAssistantTranscript+=content.outputTranscription.text;
+
+const content=data.serverContent;
+if(!content)return;
+
+if(content.inputTranscription?.text){
+state.liveUserTranscript+=content.inputTranscription.text;
+}
+
+if(content.outputTranscription?.text){
+state.liveAssistantTranscript+=content.outputTranscription.text;
+}
+
 if(content.interrupted)liveStopPlayback();
+
 const parts=content.modelTurn?.parts||[];
+
 for(const part of parts){
-if(part.inlineData?.data&&part.inlineData.mimeType?.startsWith("audio/"))livePlayAudio(part.inlineData.data);
+if(part.inlineData?.data&&part.inlineData.mimeType?.startsWith("audio/")){
+livePlayAudio(part.inlineData.data);
 }
+}
+
 if(content.turnComplete){
 const userText=state.liveUserTranscript.trim();
 const assistantText=state.liveAssistantTranscript.trim();
-state.liveUserTranscript="";state.liveAssistantTranscript="";
+
+state.liveUserTranscript="";
+state.liveAssistantTranscript="";
+
 if(userText){
 addMessage(userText,true);
 saveLocalMessage("user",userText).catch(error=>console.error("Uložení hlasové otázky:",error));
 }
+
 if(assistantText){
 addMessage(assistantText,false);
 saveLocalMessage("assistant",assistantText).catch(error=>console.error("Uložení hlasové odpovědi:",error));
 }
+
 liveStatusText("🟢 LIVE – poslouchám");
 }
-}catch(error){console.error("Zpracování LIVE zprávy:",error);liveStatusText("Chyba LIVE: "+error.message);}
+
+}catch(error){
+console.error("Zpracování LIVE zprávy:",error);
+liveStatusText("Chyba LIVE: "+error.message);
+}
 };
 
 socket.onerror=()=>{
-if(state.liveActive)liveStatusText("Chyba LIVE spojení. Zkontroluj Worker a token.");
+if(state.liveActive){
+liveStatusText("Chyba LIVE spojení. Zkontroluj Worker a token.");
+}
 };
 
 socket.onclose=event=>{
 if(state.liveActive){
 const reason=event.reason||"Spojení bylo ukončeno.";
-stopLiveVoice();liveStatusText("LIVE ukončeno: "+reason);
+stopLiveVoice();
+liveStatusText("LIVE ukončeno: "+reason);
 }
 };
+
 }catch(error){
 console.error("AntZadEn LIVE:",error);
 await stopLiveVoice();
@@ -782,26 +1272,56 @@ liveStatusText("Chyba LIVE: "+error.message);
 }
 
 async function stopLiveVoice(){
-state.liveActive=false;state.liveReady=false;
-if(state.liveSetupTimer){clearTimeout(state.liveSetupTimer);state.liveSetupTimer=null;}
-liveStopPlayback();
-const socket=state.liveSocket;state.liveSocket=null;
-if(socket){
-socket.onclose=null;socket.onerror=null;socket.onmessage=null;
-if(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING){try{socket.close();}catch{}}
+state.liveActive=false;
+state.liveReady=false;
+
+if(state.liveSetupTimer){
+clearTimeout(state.liveSetupTimer);
+state.liveSetupTimer=null;
 }
+
+liveStopPlayback();
+
+const socket=state.liveSocket;
+state.liveSocket=null;
+
+if(socket){
+socket.onclose=null;
+socket.onerror=null;
+socket.onmessage=null;
+
+if(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING){
+try{socket.close();}catch{}
+}
+}
+
 if(state.liveProcessor){
 state.liveProcessor.onaudioprocess=null;
 try{state.liveProcessor.disconnect();}catch{}
 state.liveProcessor=null;
 }
-if(state.liveSource){try{state.liveSource.disconnect();}catch{}state.liveSource=null;}
-if(state.liveMute){try{state.liveMute.disconnect();}catch{}state.liveMute=null;}
-if(state.liveStream){state.liveStream.getTracks().forEach(track=>track.stop());state.liveStream=null;}
+
+if(state.liveSource){
+try{state.liveSource.disconnect();}catch{}
+state.liveSource=null;
+}
+
+if(state.liveMute){
+try{state.liveMute.disconnect();}catch{}
+state.liveMute=null;
+}
+
+if(state.liveStream){
+state.liveStream.getTracks().forEach(track=>track.stop());
+state.liveStream=null;
+}
+
 if(state.liveAudioContext){
-const context=state.liveAudioContext;state.liveAudioContext=null;
+const context=state.liveAudioContext;
+state.liveAudioContext=null;
 await context.close().catch(()=>{});
 }
+
 $("voice-mic").textContent="🎤 Spustit LIVE";
 }
 
@@ -810,20 +1330,39 @@ async function checkConnection(){
 try{
 const response=await fetch(WORKER_URL,{cache:"no-store"});
 const data=await readResponse(response);
+
 const online=data.status==="online"&&data.ai&&data.database;
-setConnection(online?"● AI ONLINE":"● ČÁSTEČNĚ ONLINE",online?"#55e879":"#ff7777");
-}catch{setConnection("● OFFLINE","#ff7777");}
+
+setConnection(
+online?"● AI ONLINE":"● ČÁSTEČNĚ ONLINE",
+online?"#55e879":"#ff7777"
+);
+
+}catch{
+setConnection("● OFFLINE","#ff7777");
+}
 }
 
 // ADMINISTRACE
 async function adminRequest(action,extra={}){
 const headers={"Content-Type":"application/json"};
-if(state.adminToken)headers.Authorization="Bearer "+state.adminToken;
+
+if(state.adminToken){
+headers.Authorization="Bearer "+state.adminToken;
+}
+
 const response=await fetch(WORKER_URL,{
-method:"POST",headers,body:JSON.stringify({action,...extra})
+method:"POST",
+headers,
+body:JSON.stringify({action,...extra})
 });
+
 const data=await readResponse(response);
-if(!response.ok||data.error)throw new Error(data.error||"Chyba administrace.");
+
+if(!response.ok||data.error){
+throw new Error(data.error||"Chyba administrace.");
+}
+
 return data;
 }
 
@@ -841,14 +1380,19 @@ $("app").style.display="block";
 async function checkAdminSession(){
 if(!state.adminToken){
 $("admin-login").style.display="block";
-$("admin-dashboard").style.display="none";return;
+$("admin-dashboard").style.display="none";
+return;
 }
+
 try{
 await adminRequest("admin-check");
+
 $("admin-login").style.display="none";
 $("admin-dashboard").style.display="block";
+
 await refreshAdminStatus();
 await refreshAdminFeatures();
+
 }catch{
 state.adminToken="";
 sessionStorage.removeItem("antzaden_admin_token");
@@ -861,9 +1405,11 @@ async function refreshAdminStatus(){
 try{
 const response=await fetch(WORKER_URL,{cache:"no-store"});
 const data=await readResponse(response);
+
 $("admin-ai-status").textContent=data.ai?"🟢 Online":"🔴 Offline";
 $("admin-search-status").textContent=data.search?"🟢 Aktivní":"🔴 Neaktivní";
 $("admin-db-status").textContent=data.database?"🟢 Připojena":"🔴 Nepřipojena";
+
 }catch{
 $("admin-ai-status").textContent="🔴 Nedostupná";
 $("admin-search-status").textContent="🔴 Nedostupné";
@@ -873,30 +1419,54 @@ $("admin-db-status").textContent="🔴 Nepřipojena";
 
 async function refreshAdminFeatures(){
 const stats=await adminRequest("admin-stats");
+
 $("admin-stat-messages").textContent=stats.stats.totalMessages;
 $("admin-stat-guests").textContent=stats.stats.totalVisitors;
 $("admin-stat-chats").textContent=stats.stats.totalChats;
 $("admin-stat-today").textContent=stats.stats.messagesToday;
+
 const maintenance=await adminRequest("admin-maintenance-get");
+
 $("admin-maintenance-enabled").checked=maintenance.enabled;
 $("admin-maintenance-message").value=maintenance.message||"";
+
 await refreshAnnouncements();
 }
 
 async function refreshAnnouncements(){
 const data=await adminRequest("admin-announcements-list");
-const host=$("admin-announcements-list");host.innerHTML="";
-if(!data.announcements.length){host.textContent="Zatím nejsou zveřejněna žádná oznámení.";return;}
+const host=$("admin-announcements-list");
+
+host.innerHTML="";
+
+if(!data.announcements.length){
+host.textContent="Zatím nejsou zveřejněna žádná oznámení.";
+return;
+}
+
 data.announcements.forEach(item=>{
 const row=document.createElement("div");
+
 row.style.cssText="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #2a3b2e";
-const message=document.createElement("span");message.textContent=item.message;
-const del=document.createElement("button");del.className="admin-button";del.textContent="Smazat";
+
+const message=document.createElement("span");
+message.textContent=item.message;
+
+const del=document.createElement("button");
+del.className="admin-button";
+del.textContent="Smazat";
+
 del.addEventListener("click",async()=>{
-try{await adminRequest("admin-announcement-delete",{id:item.id});await refreshAnnouncements();}
-catch(error){alert(error.message);}
+try{
+await adminRequest("admin-announcement-delete",{id:item.id});
+await refreshAnnouncements();
+}catch(error){
+alert(error.message);
+}
 });
-row.append(message,del);host.appendChild(row);
+
+row.append(message,del);
+host.appendChild(row);
 });
 }
 
@@ -906,8 +1476,13 @@ $("refresh-chats").addEventListener("click",loadChats);
 
 $("form").addEventListener("submit",event=>{
 event.preventDefault();
+
 const value=$("input").value.trim();
-if(value){$("input").value="";sendMessage(value);}
+
+if(value){
+$("input").value="";
+sendMessage(value);
+}
 });
 
 document.querySelectorAll(".quick button").forEach(button=>{
@@ -918,86 +1493,146 @@ $("form").requestSubmit();
 });
 
 $("voice-mic").addEventListener("click",()=>{
-if(state.liveActive){stopLiveVoice();liveStatusText("LIVE vypnuto.");}
-else startLiveVoice();
+if(state.liveActive){
+stopLiveVoice();
+liveStatusText("LIVE vypnuto.");
+}else{
+startLiveVoice();
+}
 });
 
 $("voice-toggle").addEventListener("click",()=>{
 state.liveOutputEnabled=!state.liveOutputEnabled;
 state.browserSpeechEnabled=state.liveOutputEnabled;
+
 $("voice-toggle").textContent=state.liveOutputEnabled?"🔊 Hlas: zapnutý":"🔇 Hlas: vypnutý";
+
 if(!state.liveOutputEnabled){
 liveStopPlayback();
-if("speechSynthesis" in window)window.speechSynthesis.cancel();
+
+if("speechSynthesis" in window){
+window.speechSynthesis.cancel();
+}
 }
 });
 
 $("admin-login-button").addEventListener("click",async()=>{
 $("admin-error").textContent="Ověřuji...";
+
 try{
-const data=await adminRequest("admin-login",{password:$("admin-password").value});
-if(!data.token)throw new Error("Server nevrátil administrační token.");
+const data=await adminRequest("admin-login",{
+password:$("admin-password").value
+});
+
+if(!data.token){
+throw new Error("Server nevrátil administrační token.");
+}
+
 state.adminToken=data.token;
 sessionStorage.setItem("antzaden_admin_token",state.adminToken);
-$("admin-password").value="";$("admin-error").textContent="";
+
+$("admin-password").value="";
+$("admin-error").textContent="";
+
 await checkAdminSession();
-}catch(error){$("admin-error").textContent=error.message;}
+
+}catch(error){
+$("admin-error").textContent=error.message;
+}
 });
 
 $("admin-refresh").addEventListener("click",refreshAdminStatus);
+
 $("admin-stats-refresh").addEventListener("click",async()=>{
-try{await refreshAdminFeatures();}catch(error){alert(error.message);}
+try{
+await refreshAdminFeatures();
+}catch(error){
+alert(error.message);
+}
 });
 
 $("admin-maintenance-save").addEventListener("click",async()=>{
-const status=$("admin-maintenance-status");status.textContent="Ukládám…";
+const status=$("admin-maintenance-status");
+status.textContent="Ukládám…";
+
 try{
 await adminRequest("admin-maintenance-set",{
 enabled:$("admin-maintenance-enabled").checked,
 message:$("admin-maintenance-message").value
 });
+
 status.textContent="Nastavení bylo uloženo.";
-}catch(error){status.textContent=error.message;}
+
+}catch(error){
+status.textContent=error.message;
+}
 });
 
 $("admin-announcement-add").addEventListener("click",async()=>{
 const message=$("admin-announcement-text").value.trim();
+
 if(!message)return;
+
 try{
 await adminRequest("admin-announcement-create",{message});
+
 $("admin-announcement-text").value="";
+
 await refreshAnnouncements();
-}catch(error){alert(error.message);}
+
+}catch(error){
+alert(error.message);
+}
 });
 
 $("admin-logout").addEventListener("click",()=>{
 state.adminToken="";
 sessionStorage.removeItem("antzaden_admin_token");
+
 $("admin-dashboard").style.display="none";
 $("admin-login").style.display="block";
 $("admin-error").textContent="Byl jsi odhlášen.";
 });
 
-$("admin-open").addEventListener("click",()=>{location.hash="admin";});
+$("admin-open").addEventListener("click",()=>{
+location.hash="admin";
+});
+
 $("admin-back").addEventListener("click",()=>{
 history.replaceState(null,"",location.pathname+location.search);
 hideAdmin();
 });
 
 function handleRoute(){
-if(location.hash==="#admin")showAdmin();
-else if($("admin-screen").style.display==="block")hideAdmin();
+if(location.hash==="#admin"){
+showAdmin();
+}else if($("admin-screen").style.display==="block"){
+hideAdmin();
 }
+}
+
 window.addEventListener("hashchange",handleRoute);
 
 // SPUŠTĚNÍ
 async function startApp(){
 if(!validatePage())return;
+
 console.log("AntZadEn AI Assistant – verze 4.0.");
+
 handleRoute();
+
 await initializeGuest();
+
 setInterval(checkConnection,30000);
+
+// Kontrola nových oznámení pro návštěvníky každých 5 sekund.
+setInterval(()=>{
+if(location.hash!=="#admin"){
+loadPublicInfo().catch(error=>console.warn("Kontrola oznámení:",error));
 }
+},5000);
+}
+
 startApp();
 })();
 </script>
