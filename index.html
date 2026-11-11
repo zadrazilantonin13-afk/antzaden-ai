@@ -1,14 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090d0b">
-<meta name="description" content="AntZadEn AI Assistant – dobrovolné AntZadEn ID i anonymní režim.">
+<meta name="description" content="AntZadEn AI Assistant – bez registrace a přihlášení.">
 <title>AntZadEn AI Assistant</title>
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="shortcut icon" type="image/png" href="./favicon.png">
 <link rel="apple-touch-icon" href="./favicon.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AntZadEn AI">
+<meta name="mobile-web-app-capable" content="yes">
 
 <style>
 *{box-sizing:border-box}
@@ -92,45 +98,42 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .admin-error{color:#ff7777;font-size:13px}
 .admin-success{color:var(--green)}
 
-/* ANTZADEN ID */
-.account-open{background:#173321;color:#aef5bd;border:1px solid #3c7849;border-radius:10px;padding:9px 12px;font-size:12px;white-space:nowrap}
-.account-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:18px;overflow:auto}
-.account-panel{width:min(100%,480px);max-height:92dvh;overflow:auto;background:#101713;border:1px solid #35543c;border-radius:18px;padding:22px;box-shadow:0 20px 70px #0009}
-.account-panel h2{margin:0 0 8px;color:#75f596}
-.account-panel p{color:#9eafa3;font-size:13px;line-height:1.5}
-.account-tabs{display:flex;gap:8px;margin:16px 0}
-.account-tab{flex:1;padding:10px;border:1px solid #35543c;border-radius:9px;background:#142019;color:#c7d8cb}
-.account-tab.active{background:#1c4729;border-color:#55e879;color:#fff}
-.account-field{display:block;width:100%;padding:12px;margin:9px 0;background:#090d0b;border:1px solid #304235;border-radius:10px;color:#fff;outline:none}
-.account-field:focus{border-color:#55e879}
-.account-primary{width:100%;padding:12px;margin-top:8px;border:0;border-radius:10px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-weight:bold}
-.account-secondary{padding:10px 12px;border:1px solid #35543c;border-radius:9px;background:#17231a;color:#c6e9ce}
-.account-danger{padding:10px 12px;border:1px solid #754040;border-radius:9px;background:#301a1a;color:#ffb4b4}
-.account-view{display:none}
-.account-message{min-height:20px;color:#a9efb8;font-size:12px;white-space:pre-wrap;margin-top:10px}
-.account-help{font-size:11px!important;color:#829488!important}
-.account-profile-line{padding:10px 0;border-bottom:1px solid #26372c;color:#b9c9bd;font-size:13px}
-@media(max-width:480px){.account-open{padding:8px;font-size:10px}.account-panel{padding:17px}}
+/* MOBILNÍ MENU */
+#mobile-menu{display:none;background:#17291c;color:#b9e9c4;border:1px solid #35513b;border-radius:9px;padding:9px 11px;font-size:18px;line-height:1}
+#sidebar-backdrop{display:none}
+
 @media(max-width:700px){
 header{height:64px;padding:9px 12px}
 .brand h1{font-size:14px}
 .brand .logo{width:38px;height:38px}
-#layout{height:calc(100dvh - 64px)}
-#sidebar{width:190px;padding:9px}
+#layout{height:calc(100dvh - 64px);position:relative;overflow:hidden}
+#mobile-menu{display:inline-flex;align-items:center;justify-content:center}
+#sidebar{position:absolute;z-index:80;top:0;bottom:0;left:0;width:min(82vw,290px);max-width:290px;padding:14px;background:#0c120e;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 45px #0008}
+#layout.sidebar-open #sidebar{transform:translateX(0)}
+#sidebar-backdrop{display:block;position:absolute;z-index:70;inset:0;background:#0009;opacity:0;visibility:hidden;transition:opacity .22s ease,visibility .22s ease}
+#layout.sidebar-open #sidebar-backdrop{opacity:1;visibility:visible}
+#main-area{width:100%;min-width:0}
 main{padding:10px 10px 0}
 .message{max-width:94%;font-size:13px}
+.quick{padding:9px 10px;gap:7px}
+.bottom{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
 @media(max-width:480px){
-#sidebar{width:145px;padding:7px}
-.chat-select{font-size:11px;padding:8px}
-.chat-rename,.chat-delete{padding:5px;font-size:13px}
-.new-chat{font-size:11px;padding:10px}
-.sidebar-title{font-size:9px}
+.chat-select{font-size:12px;padding:9px}
+.chat-rename,.chat-delete{padding:6px;font-size:14px}
+.new-chat{font-size:12px;padding:11px}
+.sidebar-title{font-size:10px}
 .header-right{gap:5px}
 .small-button{padding:8px;font-size:10px}
 #image-button{padding:0 8px;font-size:11px}
-#input{font-size:13px;padding:8px}
+#input{font-size:14px;padding:8px}
+.brand{gap:8px}
+.brand h1{font-size:12px}
+.brand .sub{font-size:10px}
+.brand .logo{width:34px;height:34px}
 }
+@media(max-width:360px){#connection-status{display:none}.header-right{gap:4px}}
+@media(prefers-reduced-motion:reduce){#sidebar,#sidebar-backdrop{transition:none}}
 </style>
 </head>
 
@@ -146,7 +149,7 @@ main{padding:10px 10px 0}
   </div>
   <div class="header-right">
     <span class="status" id="connection-status">● PŘIPOJUJI...</span>
-    <button class="account-open" id="account-open">👤 AntZadEn ID</button>
+    <button type="button" id="mobile-menu" aria-label="Otevřít konverzace" aria-expanded="false">☰</button>
     <button class="small-button" id="admin-open">⚙ Admin</button>
   </div>
 </header>
@@ -160,6 +163,7 @@ main{padding:10px 10px 0}
       <button class="small-button" id="refresh-chats">↻ Obnovit chaty</button>
     </div>
   </aside>
+  <div id="sidebar-backdrop" aria-hidden="true"></div>
 
   <div id="main-area">
     <div class="quick">
@@ -198,59 +202,11 @@ main{padding:10px 10px 0}
           <button type="button" id="voice-toggle">🔇 Hlas: vypnutý</button>
           <span id="voice-status">Hlas připraven</span>
         </div>
-        <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim nebo AntZadEn ID</div>
+        <div class="hint">AntZadEn AI • Powered by Cloudflare Workers AI • Anonymní režim</div>
       </div>
     </main>
   </div>
 </div>
-</div>
-
-<div class="account-overlay" id="account-overlay" role="dialog" aria-modal="true" aria-labelledby="account-title">
-  <div class="account-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div><div style="font-size:11px;letter-spacing:2px;color:#55e879">ANTZADEN ACCOUNT</div><h2 id="account-title">AntZadEn ID</h2></div>
-      <button type="button" class="account-secondary" id="account-close" aria-label="Zavřít">✕</button>
-    </div>
-    <p id="account-intro">Vytvoř si účet nebo se přihlas. Anonymní používání zůstává dostupné i bez účtu.</p>
-    <div id="account-auth-view" class="account-view">
-      <div class="account-tabs">
-        <button type="button" class="account-tab active" id="account-tab-login">Přihlášení</button>
-        <button type="button" class="account-tab" id="account-tab-register">Registrace</button>
-      </div>
-      <div id="account-login-form">
-        <input class="account-field" id="account-login-username" autocomplete="username" maxlength="24" placeholder="Uživatelské jméno">
-        <input class="account-field" id="account-login-password" type="password" autocomplete="current-password" placeholder="Heslo">
-        <button type="button" class="account-primary" id="account-login-submit">Přihlásit se</button>
-      </div>
-      <div id="account-register-form" style="display:none">
-        <input class="account-field" id="account-register-display" maxlength="50" autocomplete="name" placeholder="Zobrazované jméno (nepovinné)">
-        <input class="account-field" id="account-register-username" maxlength="24" autocomplete="username" placeholder="Uživatelské jméno">
-        <input class="account-field" id="account-register-password" type="password" autocomplete="new-password" placeholder="Heslo (alespoň 8 znaků)">
-        <input class="account-field" id="account-register-password2" type="password" autocomplete="new-password" placeholder="Zopakuj heslo">
-        <p class="account-help">Jméno: 5–24 znaků, pouze a–z, čísla a podtržítko. Heslo: 8–128 znaků.</p>
-        <button type="button" class="account-primary" id="account-register-submit">Vytvořit AntZadEn ID</button>
-      </div>
-    </div>
-    <div id="account-profile-view" class="account-view">
-      <div class="account-profile-line">Přihlášený účet: <strong id="account-current-username"></strong></div>
-      <label class="account-help" for="account-profile-username">Uživatelské jméno</label>
-      <input class="account-field" id="account-profile-username" maxlength="24" autocomplete="username">
-      <label class="account-help" for="account-profile-display">Zobrazované jméno</label>
-      <input class="account-field" id="account-profile-display" maxlength="50">
-      <label style="display:flex;align-items:center;gap:9px;margin:12px 0;color:#c6d5ca;font-size:13px"><input type="checkbox" id="account-profile-public"> Veřejný profil (pokud ho aplikace v budoucnu zobrazí)</label>
-      <button type="button" class="account-primary" id="account-profile-save">Uložit profil</button>
-      <div style="border-top:1px solid #2a3b2e;margin-top:18px;padding-top:15px">
-        <strong style="color:#cdebd3">Změna hesla</strong>
-        <input class="account-field" id="account-current-password" type="password" autocomplete="current-password" placeholder="Současné heslo">
-        <input class="account-field" id="account-new-password" type="password" autocomplete="new-password" placeholder="Nové heslo (alespoň 8 znaků)">
-        <button type="button" class="account-secondary" id="account-password-save">Změnit heslo</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
-        <button type="button" class="account-danger" id="account-logout">Odhlásit účet</button>
-      </div>
-    </div>
-    <div class="account-message" id="account-message" aria-live="polite"></div>
-  </div>
 </div>
 
 <div id="public-notices" style="display:none;padding:10px 16px;background:#17291c;border-bottom:1px solid #35543c;color:#c9f5d2;font-size:13px"></div>
@@ -366,8 +322,7 @@ const MAX_IMAGE_BYTES=800*1024;
 const $=id=>document.getElementById(id);
 
 const state={
-token:localStorage.getItem("antzaden_account_token")||localStorage.getItem("antzaden_guest_token")||"",
-accountUser:null,isAccount:false,
+token:localStorage.getItem("antzaden_guest_token")||"",
 currentChatId:null,busy:false,
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
 selectedImage:null,selectedImageName:"",
@@ -380,7 +335,6 @@ liveUserTranscript:"",liveAssistantTranscript:"",liveSetupTimer:null
 
 const requiredIds=[
 "app","connection-status","chat-list","chat","typing",
-"account-open","account-overlay","account-close","account-title","account-intro","account-auth-view","account-profile-view","account-tab-login","account-tab-register","account-login-form","account-register-form","account-login-username","account-login-password","account-login-submit","account-register-display","account-register-username","account-register-password","account-register-password2","account-register-submit","account-current-username","account-profile-username","account-profile-display","account-profile-public","account-profile-save","account-current-password","account-new-password","account-password-save","account-logout","account-message",
 "new-chat","refresh-chats","form","input","send",
 "image-button","image-file","image-preview","image-preview-img",
 "image-preview-name","image-remove",
@@ -469,30 +423,12 @@ try{
 const publicInfo=await loadPublicInfo();
 if(publicInfo.maintenance&&location.hash!=="#admin")return;
 
-const savedAccountToken=localStorage.getItem("antzaden_account_token");
-if(savedAccountToken){
-state.token=savedAccountToken;
-try{
-const account=await api("account-me");
-state.accountUser=account.user;
-state.isAccount=true;
-}catch(error){
-console.warn("Uložená relace AntZadEn ID již není platná:",error);
-localStorage.removeItem("antzaden_account_token");
-state.accountUser=null;
-state.isAccount=false;
-state.token="";
-}
-}
-
-if(!state.isAccount){
 const data=await api("guest-init",{},false);
 if(!data.token)throw new Error("Server nevydal anonymní token.");
+
 state.token=data.token;
 localStorage.setItem("antzaden_guest_token",state.token);
-}
 
-updateAccountButton();
 if(location.hash!=="#admin")$("app").style.display="block";
 await loadChats();
 await checkConnection();
@@ -505,144 +441,6 @@ clearChatView();
 addMessage("Nepodařilo se spustit anonymní režim.\n\n"+error.message,false);
 }
 }
-
-// ANTZADEN ID – UŽIVATELSKÉ ÚČTY
-function updateAccountButton(){
-const button=$("account-open");
-if(!button)return;
-button.textContent=state.isAccount&&state.accountUser
-?"👤 "+(state.accountUser.display_name||state.accountUser.username)
-:"👤 AntZadEn ID";
-button.title=state.isAccount?"Správa účtu AntZadEn ID":"Přihlášení nebo vytvoření účtu";
-}
-
-function accountMessage(message,isError=false){
-const box=$("account-message");
-box.textContent=message||"";
-box.style.color=isError?"#ff9999":"#a9efb8";
-}
-
-function openAccount(){
-$("account-overlay").style.display="flex";
-accountMessage("");
-if(state.isAccount){showAccountProfile();}
-else showAccountAuth("login");
-}
-function closeAccount(){$("account-overlay").style.display="none";}
-function showAccountAuth(tab){
-$("account-auth-view").style.display="block";
-$("account-profile-view").style.display="none";
-$("account-intro").textContent="Účet je dobrovolný. Bez registrace můžeš AntZadEn AI dál používat anonymně.";
-const registering=tab==="register";
-$("account-login-form").style.display=registering?"none":"block";
-$("account-register-form").style.display=registering?"block":"none";
-$("account-tab-login").classList.toggle("active",!registering);
-$("account-tab-register").classList.toggle("active",registering);
-$("account-title").textContent=registering?"Vytvořit AntZadEn ID":"Přihlášení";
-}
-function showAccountProfile(){
-const user=state.accountUser||{};
-$("account-auth-view").style.display="none";
-$("account-profile-view").style.display="block";
-$("account-intro").textContent="Spravuj své údaje a heslo. Tvoje chaty jsou propojené s tímto účtem.";
-$("account-title").textContent="Můj AntZadEn ID";
-$("account-current-username").textContent=user.username||"";
-$("account-profile-username").value=user.username||"";
-$("account-profile-display").value=user.display_name||"";
-$("account-profile-public").checked=Boolean(user.is_public);
-}
-
-async function accountRegister(){
-const username=$("account-register-username").value.trim().toLowerCase();
-const password=$("account-register-password").value;
-const password2=$("account-register-password2").value;
-if(password!==password2){accountMessage("Hesla se neshodují.",true);return;}
-if(password.length<8){accountMessage("Heslo musí mít alespoň 8 znaků.",true);return;}
-const button=$("account-register-submit");button.disabled=true;button.textContent="Vytvářím účet…";
-try{
-const data=await api("account-register",{
-username,password,displayName:$("account-register-display").value.trim()
-},true);
-if(!data.token)throw new Error("Server nevydal přihlašovací token.");
-state.token=data.token;state.accountUser=data.user;state.isAccount=true;
-localStorage.setItem("antzaden_account_token",state.token);
-localStorage.removeItem("antzaden_guest_token");
-$("account-register-password").value="";$("account-register-password2").value="";
-updateAccountButton();showAccountProfile();
-accountMessage(data.migratedChats?"Účet vytvořen. Tvoje anonymní chaty byly převedeny do AntZadEn ID.":"Účet byl úspěšně vytvořen.");
-await loadChats();
-}catch(error){accountMessage(error.message,true);}
-finally{button.disabled=false;button.textContent="Vytvořit AntZadEn ID";}
-}
-
-async function accountLogin(){
-const button=$("account-login-submit");button.disabled=true;button.textContent="Přihlašuji…";
-try{
-const data=await api("account-login",{
-username:$("account-login-username").value.trim(),
-password:$("account-login-password").value
-},false);
-if(!data.token)throw new Error("Server nevydal přihlašovací token.");
-state.token=data.token;state.accountUser=data.user;state.isAccount=true;
-localStorage.setItem("antzaden_account_token",state.token);
-localStorage.removeItem("antzaden_guest_token");
-$("account-login-password").value="";
-updateAccountButton();showAccountProfile();
-accountMessage("Úspěšně ses přihlásil.");
-await loadChats();
-}catch(error){accountMessage(error.message,true);}
-finally{button.disabled=false;button.textContent="Přihlásit se";}
-}
-
-async function accountSaveProfile(){
-const button=$("account-profile-save");button.disabled=true;button.textContent="Ukládám…";
-try{
-const data=await api("account-profile-save",{
-username:$("account-profile-username").value.trim(),
-displayName:$("account-profile-display").value.trim(),
-isPublic:$("account-profile-public").checked
-});
-if(data.token){state.token=data.token;localStorage.setItem("antzaden_account_token",state.token);}
-state.accountUser=data.user;updateAccountButton();showAccountProfile();accountMessage("Profil byl uložen.");
-}catch(error){accountMessage(error.message,true);}
-finally{button.disabled=false;button.textContent="Uložit profil";}
-}
-
-async function accountChangePassword(){
-const currentPassword=$("account-current-password").value;
-const newPassword=$("account-new-password").value;
-if(newPassword.length<8){accountMessage("Nové heslo musí mít alespoň 8 znaků.",true);return;}
-const button=$("account-password-save");button.disabled=true;button.textContent="Měním…";
-try{
-const data=await api("account-password-change",{currentPassword,newPassword});
-$("account-current-password").value="";$("account-new-password").value="";
-accountMessage(data.message||"Heslo bylo změněno.");
-}catch(error){accountMessage(error.message,true);}
-finally{button.disabled=false;button.textContent="Změnit heslo";}
-}
-
-async function accountLogout(){
-if(!confirm("Odhlásit se z AntZadEn ID?"))return;
-localStorage.removeItem("antzaden_account_token");
-state.accountUser=null;state.isAccount=false;state.token="";state.currentChatId=null;
-try{
-const data=await api("guest-init",{},false);
-state.token=data.token;localStorage.setItem("antzaden_guest_token",state.token);
-updateAccountButton();closeAccount();await loadChats();
-}catch(error){accountMessage("Odhlášení proběhlo, ale anonymní režim se nepodařilo spustit: "+error.message,true);}
-}
-
-$("account-open").addEventListener("click",openAccount);
-$("account-close").addEventListener("click",closeAccount);
-$("account-overlay").addEventListener("click",event=>{if(event.target===$("account-overlay"))closeAccount();});
-$("account-tab-login").addEventListener("click",()=>{showAccountAuth("login");accountMessage("");});
-$("account-tab-register").addEventListener("click",()=>{showAccountAuth("register");accountMessage("");});
-$("account-login-submit").addEventListener("click",accountLogin);
-$("account-register-submit").addEventListener("click",accountRegister);
-$("account-profile-save").addEventListener("click",accountSaveProfile);
-$("account-password-save").addEventListener("click",accountChangePassword);
-$("account-logout").addEventListener("click",accountLogout);
-["account-login-password","account-register-password2"].forEach(id=>$(id).addEventListener("keydown",event=>{if(event.key==="Enter")$(id==="account-login-password"?"account-login-submit":"account-register-submit").click();}));
 
 // MARKDOWN
 function escapeHTML(text){
@@ -2255,11 +2053,41 @@ hideAdmin();
 
 window.addEventListener("hashchange",handleRoute);
 
+// MOBILNÍ MENU A INSTALACE PWA
+function closeMobileSidebar(){
+  const layout=$("layout");
+  if(!layout)return;
+  layout.classList.remove("sidebar-open");
+  const toggle=$("mobile-menu");
+  if(toggle)toggle.setAttribute("aria-expanded","false");
+}
+
+const mobileMenu=$("mobile-menu");
+if(mobileMenu){
+  mobileMenu.addEventListener("click",()=>{
+    const open=$("layout").classList.toggle("sidebar-open");
+    mobileMenu.setAttribute("aria-expanded",String(open));
+  });
+}
+
+$("sidebar-backdrop")?.addEventListener("click",closeMobileSidebar);
+$("new-chat")?.addEventListener("click",closeMobileSidebar);
+$("chat-list")?.addEventListener("click",event=>{
+  if(event.target.closest("button"))closeMobileSidebar();
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./service-worker.js",{scope:"./"})
+      .catch(error=>console.warn("AntZadEn PWA registrace:",error));
+  });
+}
+
 // SPUŠTĚNÍ
 async function startApp(){
 if(!validatePage())return;
 
-console.log("AntZadEn AI Assistant – verze 5.1 Vision + AntZadEn ID.");
+console.log("AntZadEn AI Assistant – verze 5.0 Vision.");
 
 handleRoute();
 await initializeGuest();
