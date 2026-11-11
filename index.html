@@ -928,16 +928,209 @@ if(!(data.results||[]).length&&!data.answer)host.textContent="Vyhledávání nev
 }catch(error){host.textContent="Test vyhledávání selhal: "+error.message;}
 }
 
+// AUTOMATICKÁ ÚDRŽBA A HISTORIE UDÁLOSTÍ
+function createAdminMaintenancePanel(){
+if($("admin-auto-maintenance-card"))return;
+
+const dashboard=$("admin-dashboard");
+
+const card=document.createElement("div");
+card.className="admin-card";
+card.id="admin-auto-maintenance-card";
+
+card.innerHTML=`
+<h2>🔧 Automatická údržba systému</h2>
+<p class="admin-muted">
+Automatické kontroly systému každý den mezi 06:00 a 07:30.
+Vypnutí zastaví také právě probíhající automatickou údržbu.
+</p>
+
+<label style="display:flex;gap:10px;align-items:center;margin:15px 0">
+<input type="checkbox" id="admin-auto-maintenance-enabled">
+<strong>Zapnout automatickou údržbu</strong>
+</label>
+
+<p id="admin-auto-maintenance-status" class="admin-muted">
+Načítám stav údržby…
+</p>
+
+<div id="admin-auto-maintenance-report"
+style="white-space:pre-wrap;line-height:1.6;margin:12px 0;color:#dce9df">
+Zatím není dostupný žádný report.
+</div>
+
+<button class="admin-button" id="admin-auto-maintenance-refresh">
+↻ Obnovit stav a výsledky
+</button>
+`;
+
+const history=document.createElement("div");
+history.className="admin-card";
+history.id="admin-activity-card";
+
+history.innerHTML=`
+<h2>📜 Historie systémových událostí</h2>
+<p class="admin-muted">
+Přehled systémových událostí. Zobrazuje pouze typ události a datum.
+Neobsahuje jména uživatelů ani podrobnosti o jejich aktivitě.
+</p>
+<div id="admin-activity-list" class="admin-muted">
+Načítám historii…
+</div>
+<button class="admin-button" id="admin-activity-refresh">
+↻ Obnovit historii
+</button>
+`;
+
+const logout=dashboard.querySelector("#admin-logout");
+const logoutCard=logout?.closest(".admin-card");
+
+if(logoutCard){
+dashboard.insertBefore(card,logoutCard);
+dashboard.insertBefore(history,logoutCard);
+}else{
+dashboard.append(card,history);
+}
+
+$("admin-auto-maintenance-enabled").addEventListener("change",async()=>{
+const checkbox=$("admin-auto-maintenance-enabled");
+const status=$("admin-auto-maintenance-status");
+
+checkbox.disabled=true;
+status.textContent="Ukládám nastavení…";
+
+try{
+const result=await adminRequest("admin-auto-maintenance-set",{
+enabled:checkbox.checked
+});
+
+status.textContent=result.message||
+(checkbox.checked
+?"Automatická údržba je zapnutá."
+:"Automatická údržba je vypnutá.");
+
+await refreshAutoMaintenance();
+await refreshActivity();
+}catch(error){
+checkbox.checked=!checkbox.checked;
+status.textContent="Nepodařilo se uložit nastavení: "+error.message;
+}finally{
+checkbox.disabled=false;
+}
+});
+
+$("admin-auto-maintenance-refresh").addEventListener("click",async()=>{
+try{
+await refreshAutoMaintenance();
+await refreshActivity();
+}catch(error){
+$("admin-auto-maintenance-status").textContent=error.message;
+}
+});
+
+$("admin-activity-refresh").addEventListener("click",async()=>{
+try{
+await refreshActivity();
+}catch(error){
+$("admin-activity-list").textContent=error.message;
+}
+});
+}
+
+async function refreshAutoMaintenance(){
+createAdminMaintenancePanel();
+
+const data=await adminRequest("admin-auto-maintenance-get");
+
+$("admin-auto-maintenance-enabled").checked=!!data.enabled;
+
+const status=$("admin-auto-maintenance-status");
+const report=$("admin-auto-maintenance-report");
+
+const statusNames={
+idle:"Zatím nebyla spuštěna.",
+running:"Probíhá automatická údržba.",
+completed:"Poslední údržba byla dokončena.",
+stopped:"Automatická údržba byla zastavena.",
+error:"Při údržbě nastala chyba."
+};
+
+status.textContent=
+"Stav: "+(statusNames[data.status]||data.status||"Neznámý")+
+(data.lastRun?"\nPoslední spuštění: "+new Date(data.lastRun).toLocaleString("cs-CZ"):"");
+
+report.textContent="";
+
+if(data.report){
+try{
+const parsed=typeof data.report==="string"
+?JSON.parse(data.report)
+:data.report;
+
+report.textContent=JSON.stringify(parsed,null,2);
+}catch{
+report.textContent=String(data.report);
+}
+}else{
+report.textContent="Zatím není dostupný žádný výsledek kontroly.";
+}
+}
+
+async function refreshActivity(){
+createAdminMaintenancePanel();
+
+const data=await adminRequest("admin-activity-list");
+const host=$("admin-activity-list");
+host.innerHTML="";
+
+const events=Array.isArray(data.events)?data.events:[];
+
+if(!events.length){
+host.textContent="Zatím nejsou zaznamenány žádné systémové události.";
+return;
+}
+
+events.forEach(event=>{
+const row=document.createElement("div");
+
+row.style.cssText=
+"padding:11px 0;border-top:1px solid #2a3b2e;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap";
+
+const type=document.createElement("strong");
+type.textContent=event.eventType||event.event_type||"Systémová událost";
+
+const date=document.createElement("span");
+date.className="admin-muted";
+
+const timestamp=event.createdAt||event.created_at;
+
+date.textContent=timestamp
+?new Date(timestamp).toLocaleString("cs-CZ")
+:"Čas není dostupný";
+
+row.append(type,date);
+host.appendChild(row);
+});
+}
+  
 async function refreshAdminFeatures(){
+createAdminMaintenancePanel();
+
 const stats=await adminRequest("admin-stats");
+
 $("admin-stat-messages").textContent=stats.stats.totalMessages;
 $("admin-stat-guests").textContent=stats.stats.totalGuests;
 $("admin-stat-chats").textContent=stats.stats.totalChats;
 $("admin-stat-today").textContent=stats.stats.messagesToday;
+
 const maintenance=await adminRequest("admin-maintenance-get");
+
 $("admin-maintenance-enabled").checked=maintenance.enabled;
 $("admin-maintenance-message").value=maintenance.message||"";
+
 await refreshAnnouncements();
+await refreshAutoMaintenance();
+await refreshActivity();
 }
 
 async function refreshAnnouncements(){
