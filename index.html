@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -14,7 +15,7 @@
 *{box-sizing:border-box}
 :root{--bg:#090d0b;--panel:#101713;--border:#2a3b2e;--green:#55e879;--text:#edf5ef;--muted:#91a397}
 body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;overflow:hidden}
-button,input,textarea{font:inherit}
+button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
 #app{height:100dvh;display:none}
@@ -91,6 +92,16 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 .admin-muted{color:var(--muted);font-size:13px}
 .admin-error{color:#ff7777;font-size:13px}
 .admin-success{color:var(--green)}
+.owner-card{background:linear-gradient(145deg,#14251a,#101713);border:1px solid #477b50}
+.owner-title{color:#a8f5b8!important}
+.owner-stat{background:#0c120e;border:1px solid #304235;border-radius:12px;padding:15px;min-width:0}
+.owner-stat strong{display:block;font-size:24px;color:#75f596;margin-top:7px}
+.owner-user{padding:15px 0;border-top:1px solid #2a3b2e}
+.owner-user-title{color:#75f596;font-weight:bold;overflow-wrap:anywhere}
+.owner-user-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px}
+.owner-role-select{background:#090d0b;border:1px solid #35543c;border-radius:9px;color:#fff;padding:10px;min-width:100px}
+.owner-block-button{background:#713838;color:white}
+.owner-activity-row{padding:11px 0;border-top:1px solid #2a3b2e;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 
 /* ANTZADEN ID */
 .account-open{background:#173321;color:#aef5bd;border:1px solid #3c7849;border-radius:10px;padding:9px 12px;font-size:12px;white-space:nowrap}
@@ -130,6 +141,7 @@ main{padding:10px 10px 0}
 .small-button{padding:8px;font-size:10px}
 #image-button{padding:0 8px;font-size:11px}
 #input{font-size:13px;padding:8px}
+.owner-user-controls>*{max-width:100%}
 }
 </style>
 </head>
@@ -279,6 +291,42 @@ main{padding:10px 10px 0}
     <p id="admin-error" class="admin-error"></p>
   </div>
 
+  <!-- SAMOSTATNÉ OWNER PŘIHLÁŠENÍ -->
+  <div class="admin-card owner-card" id="owner-login-card">
+    <h2 class="owner-title">👑 OWNER přihlášení</h2>
+    <p class="admin-muted">Samostatný vstup pro vlastníka AntZadEn AI. Přihlášení OWNER není stejné jako běžné Admin přihlášení.</p>
+    <input id="owner-password" class="admin-input" type="password" autocomplete="current-password" placeholder="OWNER heslo">
+    <button class="admin-button" id="owner-login-button">👑 Přihlásit jako OWNER</button>
+    <p id="owner-login-error" class="admin-error" aria-live="polite"></p>
+  </div>
+
+  <!-- OWNER PANEL -->
+  <div id="owner-dashboard" style="display:none">
+    <div class="admin-card owner-card">
+      <h2 class="owner-title">👑 OWNER CONTROL PANEL</h2>
+      <p class="admin-muted">Hlavní správa AntZadEn AI. Tato část je oddělená od běžné administrace.</p>
+      <div id="owner-overview" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px"></div>
+      <button class="admin-button" id="owner-refresh">↻ Obnovit přehled</button>
+    </div>
+
+    <div class="admin-card">
+      <h2>👥 Správa uživatelů</h2>
+      <p class="admin-muted">Zobrazení účtů, změna role USER/ADMIN a blokování účtů.</p>
+      <div id="owner-users" class="admin-muted">Načítám uživatele…</div>
+    </div>
+
+    <div class="admin-card">
+      <h2>📜 OWNER – historie aktivit</h2>
+      <div id="owner-activity" class="admin-muted">Načítám historii…</div>
+      <button class="admin-button" id="owner-activity-refresh">↻ Obnovit historii</button>
+    </div>
+
+    <div class="admin-card">
+      <p class="admin-muted">Jsi přihlášen jako OWNER. Odhlášení ukončí pouze OWNER relaci.</p>
+      <button class="admin-button" id="owner-logout">🚪 Odhlásit OWNER</button>
+    </div>
+  </div>
+
   <div id="admin-dashboard" style="display:none">
     <div class="admin-card">
       <h2>📊 Přehled systému</h2>
@@ -347,7 +395,7 @@ main{padding:10px 10px 0}
     <div class="admin-card">
       <h2>🛠️ Systém</h2>
       <p class="admin-muted">AntZadEn AI Assistant – administrace systému.</p>
-      <p>Verze: AntZadEn AI 5.0 – Vision</p>
+      <p>Verze: AntZadEn AI 5.1 – Vision + OWNER</p>
     </div>
 
     <div class="admin-card">
@@ -370,6 +418,7 @@ token:localStorage.getItem("antzaden_account_token")||localStorage.getItem("antz
 accountUser:null,isAccount:false,
 currentChatId:null,busy:false,
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
+ownerToken:sessionStorage.getItem("antzaden_owner_token")||"",
 selectedImage:null,selectedImageName:"",
 liveSocket:null,liveStream:null,
 liveAudioContext:null,liveProcessor:null,liveSource:null,
@@ -397,7 +446,10 @@ const requiredIds=[
 "public-notices","maintenance-screen","maintenance-message",
 "admin-diagnostics-run","admin-diagnostics-status","admin-diagnostics-results","admin-ai-report",
 "admin-test-ai-prompt","admin-test-ai-button","admin-test-ai-result",
-"admin-test-search-query","admin-test-search-button","admin-test-search-result","admin-live-test"
+"admin-test-search-query","admin-test-search-button","admin-test-search-result","admin-live-test",
+"owner-login-card","owner-password","owner-login-button","owner-login-error",
+"owner-dashboard","owner-overview","owner-users","owner-activity",
+"owner-refresh","owner-activity-refresh","owner-logout"
 ];
 
 function validatePage(){
@@ -1240,7 +1292,6 @@ if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
 
 const question=$("input").value.trim();
 const image=state.selectedImage;
-const name=state.selectedImageName;
 
 state.busy=true;
 $("send").disabled=true;
@@ -1715,6 +1766,330 @@ throw new Error(data.error||"Chyba administrace.");
 return data;
 }
 
+// ==========================================
+// OWNER SYSTEM – SAMOSTATNÉ PŘIHLÁŠENÍ
+// ==========================================
+
+async function ownerRequest(action,extra={}){
+if(!state.ownerToken)throw new Error("OWNER není přihlášen.");
+
+const response=await fetch(WORKER_URL,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+state.ownerToken
+},
+body:JSON.stringify({action,...extra})
+});
+
+const data=await readResponse(response);
+
+if(!response.ok||data.error){
+throw new Error(data.error||"Chyba OWNER systému.");
+}
+
+return data;
+}
+
+function ownerShowLogin(){
+$("owner-login-card").style.display="block";
+$("owner-dashboard").style.display="none";
+}
+
+function ownerHide(){
+$("owner-login-card").style.display="none";
+$("owner-dashboard").style.display="none";
+}
+
+async function ownerLogin(){
+const button=$("owner-login-button");
+const errorBox=$("owner-login-error");
+
+button.disabled=true;
+button.textContent="Ověřuji OWNER…";
+errorBox.textContent="";
+
+try{
+const response=await fetch(WORKER_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+action:"owner-login",
+password:$("owner-password").value
+})
+});
+
+const data=await readResponse(response);
+
+if(!response.ok||data.error){
+throw new Error(data.error||"OWNER přihlášení se nezdařilo.");
+}
+
+if(!data.token||data.role!=="OWNER"){
+throw new Error("Server nepotvrdil OWNER oprávnění.");
+}
+
+state.ownerToken=data.token;
+sessionStorage.setItem("antzaden_owner_token",data.token);
+
+$("owner-password").value="";
+$("owner-login-card").style.display="none";
+$("owner-dashboard").style.display="block";
+
+await ownerRefreshAll();
+
+}catch(error){
+errorBox.textContent=error.message;
+}finally{
+button.disabled=false;
+button.textContent="👑 Přihlásit jako OWNER";
+}
+}
+
+function ownerCreateStat(label,value){
+const card=document.createElement("div");
+card.className="owner-stat";
+
+const name=document.createElement("div");
+name.className="admin-muted";
+name.textContent=label;
+
+const number=document.createElement("strong");
+number.textContent=value===undefined||value===null?"–":String(value);
+
+card.append(name,number);
+return card;
+}
+
+async function ownerLoadOverview(){
+const data=await ownerRequest("owner-overview");
+const overview=data.overview||{};
+const host=$("owner-overview");
+
+host.innerHTML="";
+
+[
+["Uživatelé",overview.users],
+["Administrátoři",overview.admins],
+["Blokované účty",overview.blockedUsers],
+["Anonymní návštěvníci",overview.guests],
+["Chaty",overview.chats],
+["Zprávy",overview.messages]
+].forEach(([label,value])=>{
+host.appendChild(ownerCreateStat(label,value));
+});
+}
+
+async function ownerLoadUsers(){
+const host=$("owner-users");
+host.textContent="Načítám uživatele…";
+
+try{
+const data=await ownerRequest("owner-users-list");
+const users=Array.isArray(data.users)?data.users:[];
+
+host.innerHTML="";
+
+if(!users.length){
+host.textContent="V databázi zatím nejsou žádní uživatelé.";
+return;
+}
+
+users.forEach(user=>{
+const card=document.createElement("div");
+card.className="owner-user";
+
+const title=document.createElement("div");
+title.className="owner-user-title";
+title.textContent=(user.display_name||user.username||"Uživatel")+
+(user.username?" (@"+user.username+")":"");
+
+const details=document.createElement("p");
+details.className="admin-muted";
+details.textContent=
+"Role: "+(user.role||"USER")+
+" | Stav: "+(user.blocked?"Blokovaný":"Aktivní")+
+" | ID: "+user.id;
+
+const controls=document.createElement("div");
+controls.className="owner-user-controls";
+
+const role=document.createElement("select");
+role.className="owner-role-select";
+role.setAttribute("aria-label","Role uživatele");
+
+["USER","ADMIN"].forEach(value=>{
+const option=document.createElement("option");
+option.value=value;
+option.textContent=value;
+role.appendChild(option);
+});
+
+role.value=user.role==="ADMIN"?"ADMIN":"USER";
+
+const save=document.createElement("button");
+save.className="admin-button";
+save.textContent="Uložit roli";
+
+save.addEventListener("click",async()=>{
+if(!confirm("Změnit roli uživatele "+(user.username||user.id)+" na "+role.value+"?"))return;
+
+save.disabled=true;
+
+try{
+await ownerRequest("owner-user-role-set",{
+userId:user.id,
+role:role.value
+});
+
+alert("Role byla změněna.");
+await ownerLoadUsers();
+await ownerLoadOverview();
+
+}catch(error){
+alert("Změna role se nezdařila: "+error.message);
+}finally{
+save.disabled=false;
+}
+});
+
+const block=document.createElement("button");
+block.className="admin-button owner-block-button";
+block.textContent=user.blocked?"Odblokovat účet":"Zablokovat účet";
+
+block.addEventListener("click",async()=>{
+const nextBlocked=!user.blocked;
+let reason="";
+
+if(nextBlocked){
+reason=prompt("Zadej důvod blokování účtu:")||"Blokováno vlastníkem";
+}
+
+if(!confirm(
+nextBlocked
+?"Opravdu chceš zablokovat účet "+(user.username||user.id)+"?"
+:"Opravdu chceš odblokovat účet "+(user.username||user.id)+"?"
+))return;
+
+block.disabled=true;
+
+try{
+await ownerRequest("owner-user-block-set",{
+userId:user.id,
+blocked:nextBlocked,
+reason
+});
+
+await ownerLoadUsers();
+await ownerLoadOverview();
+
+}catch(error){
+alert("Změna stavu účtu se nezdařila: "+error.message);
+}finally{
+block.disabled=false;
+}
+});
+
+controls.append(role,save,block);
+card.append(title,details,controls);
+host.appendChild(card);
+});
+
+}catch(error){
+host.textContent="Nepodařilo se načíst uživatele: "+error.message;
+}
+}
+
+async function ownerLoadActivity(){
+const host=$("owner-activity");
+host.textContent="Načítám historii…";
+
+try{
+const data=await ownerRequest("owner-activity-list");
+const events=Array.isArray(data.events)?data.events:[];
+
+host.innerHTML="";
+
+if(!events.length){
+host.textContent="Zatím nejsou zaznamenány žádné události.";
+return;
+}
+
+events.forEach(event=>{
+const row=document.createElement("div");
+row.className="owner-activity-row";
+
+const type=document.createElement("strong");
+type.textContent=event.event_type||"Systémová událost";
+
+const date=document.createElement("span");
+date.className="admin-muted";
+date.textContent=event.created_at
+?new Date(event.created_at).toLocaleString("cs-CZ")
+:"Čas není dostupný";
+
+row.append(type,date);
+host.appendChild(row);
+});
+
+}catch(error){
+host.textContent="Historii se nepodařilo načíst: "+error.message;
+}
+}
+
+async function ownerRefreshAll(){
+try{
+const check=await ownerRequest("owner-check");
+
+if(!check.valid||check.role!=="OWNER"){
+throw new Error("OWNER relace není platná.");
+}
+
+await Promise.all([
+ownerLoadOverview(),
+ownerLoadUsers(),
+ownerLoadActivity()
+]);
+
+}catch(error){
+$("owner-dashboard").style.display="none";
+$("owner-login-card").style.display="block";
+$("owner-login-error").textContent=error.message;
+state.ownerToken="";
+sessionStorage.removeItem("antzaden_owner_token");
+}
+}
+
+async function ownerCheckSavedSession(){
+if(!state.ownerToken){
+ownerShowLogin();
+return;
+}
+
+$("owner-login-card").style.display="none";
+$("owner-dashboard").style.display="block";
+
+await ownerRefreshAll();
+}
+
+$("owner-login-button").addEventListener("click",ownerLogin);
+
+$("owner-password").addEventListener("keydown",event=>{
+if(event.key==="Enter")ownerLogin();
+});
+
+$("owner-refresh").addEventListener("click",ownerRefreshAll);
+$("owner-activity-refresh").addEventListener("click",ownerLoadActivity);
+
+$("owner-logout").addEventListener("click",()=>{
+state.ownerToken="";
+sessionStorage.removeItem("antzaden_owner_token");
+$("owner-dashboard").style.display="none";
+ownerShowLogin();
+$("owner-login-error").textContent="OWNER byl odhlášen.";
+});
+
+// ADMIN – ZOBRAZENÍ A RELACE
 function showAdmin(){
 $("app").style.display="none";
 $("admin-screen").style.display="block";
@@ -1730,6 +2105,7 @@ async function checkAdminSession(){
 if(!state.adminToken){
 $("admin-login").style.display="block";
 $("admin-dashboard").style.display="none";
+await ownerCheckSavedSession();
 return;
 }
 
@@ -1739,6 +2115,9 @@ await adminRequest("admin-check");
 $("admin-login").style.display="none";
 $("admin-dashboard").style.display="block";
 
+// Běžný ADMIN OWNER panel nevidí.
+ownerHide();
+
 await refreshAdminStatus();
 await refreshAdminFeatures();
 
@@ -1747,6 +2126,7 @@ state.adminToken="";
 sessionStorage.removeItem("antzaden_admin_token");
 $("admin-login").style.display="block";
 $("admin-dashboard").style.display="none";
+await ownerCheckSavedSession();
 }
 }
 
@@ -2233,6 +2613,7 @@ sessionStorage.removeItem("antzaden_admin_token");
 
 $("admin-dashboard").style.display="none";
 $("admin-login").style.display="block";
+ownerHide();
 $("admin-error").textContent="Byl jsi odhlášen.";
 });
 
@@ -2259,7 +2640,7 @@ window.addEventListener("hashchange",handleRoute);
 async function startApp(){
 if(!validatePage())return;
 
-console.log("AntZadEn AI Assistant – verze 5.1 Vision + AntZadEn ID.");
+console.log("AntZadEn AI Assistant – verze 5.1 Vision + AntZadEn ID + OWNER.");
 
 handleRoute();
 await initializeGuest();
