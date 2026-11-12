@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -184,7 +183,7 @@ main{padding:10px 10px 0}
     <main>
       <section id="chat" aria-live="polite">
         <div id="typing">
-          <span class="spinner"></span>AntZadEn AI přemýšlí…
+          <span class="spinner"></span><span id="typing-text">AntZadEn AI přemýšlí…</span>
         </div>
       </section>
 
@@ -291,7 +290,6 @@ main{padding:10px 10px 0}
     <p id="admin-error" class="admin-error"></p>
   </div>
 
-  <!-- SAMOSTATNÉ OWNER PŘIHLÁŠENÍ -->
   <div class="admin-card owner-card" id="owner-login-card">
     <h2 class="owner-title">👑 OWNER přihlášení</h2>
     <p class="admin-muted">Samostatný vstup pro vlastníka AntZadEn AI. Přihlášení OWNER není stejné jako běžné Admin přihlášení.</p>
@@ -300,7 +298,6 @@ main{padding:10px 10px 0}
     <p id="owner-login-error" class="admin-error" aria-live="polite"></p>
   </div>
 
-  <!-- OWNER PANEL -->
   <div id="owner-dashboard" style="display:none">
     <div class="admin-card owner-card">
       <h2 class="owner-title">👑 OWNER CONTROL PANEL</h2>
@@ -808,8 +805,13 @@ function clearChatView(){
 $("chat").innerHTML="";
 const indicator=document.createElement("div");
 indicator.id="typing";
-indicator.innerHTML='<span class="spinner"></span>AntZadEn AI přemýšlí…';
+indicator.innerHTML='<span class="spinner"></span><span id="typing-text">AntZadEn AI přemýšlí…</span>';
 $("chat").appendChild(indicator);
+}
+
+function setTypingText(text){
+const label=$("typing-text");
+if(label)label.textContent=text;
 }
 
 function addMessage(text,isUser=false){
@@ -1239,6 +1241,18 @@ $("input").disabled=true;
 $("image-button").disabled=true;
 
 addMessage(query,true);
+
+// Dynamický stav podle toho, co AntZadEn AI právě zpracovává.
+const lowerQuery=query.toLowerCase();
+
+if(/počasí|pocasi/.test(lowerQuery)){
+setTypingText("Zjišťuji aktuální počasí…");
+}else if(/kolik je hodin|aktuální čas|jaky je cas|jaký je čas/.test(lowerQuery)){
+setTypingText("Zjišťuji aktuální čas…");
+}else{
+setTypingText("AntZadEn AI přemýšlí…");
+}
+
 $("typing").style.display="flex";
 scrollDown();
 
@@ -1307,6 +1321,8 @@ version:1
 addMessage(previewMessage,true);
 clearSelectedImage();
 $("input").value="";
+
+setTypingText("AntZadEn AI analyzuje obrázek…");
 $("typing").style.display="flex";
 scrollDown();
 
@@ -2115,7 +2131,6 @@ await adminRequest("admin-check");
 $("admin-login").style.display="none";
 $("admin-dashboard").style.display="block";
 
-// Běžný ADMIN OWNER panel nevidí.
 ownerHide();
 
 await refreshAdminStatus();
@@ -2221,7 +2236,7 @@ host.innerHTML="";
 
 const loading=document.createElement("p");
 loading.className="admin-muted";
-loading.textContent="Vyhledávám…";
+loading.textContent="AntZadEn AI vyhledává na internetu…";
 host.appendChild(loading);
 
 try{
