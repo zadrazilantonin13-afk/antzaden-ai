@@ -203,6 +203,7 @@ main{padding:10px 10px 0}
           <input id="input" type="text" placeholder="Napiš zprávu nebo otázku k obrázku..." autocomplete="off" maxlength="4000">
           <button id="send" type="submit">➤</button>
         </form>
+        <div id="image-quota-status" style="font-size:11px;color:#91a397;padding:7px 3px 0">Denní limit obrázků: načítám…</div>
 
         <div class="voicebar">
           <button type="button" id="voice-mic">🎤 Spustit LIVE</button>
@@ -417,6 +418,7 @@ currentChatId:null,busy:false,
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
 ownerToken:sessionStorage.getItem("antzaden_owner_token")||"",
 selectedImage:null,selectedImageName:"",
+imageQuotaRemaining:2,imageQuotaUnlimited:false,
 liveSocket:null,liveStream:null,
 liveAudioContext:null,liveProcessor:null,liveSource:null,
 liveMute:null,liveActive:false,liveReady:false,
@@ -429,7 +431,7 @@ const requiredIds=[
 "account-open","account-overlay","account-close","account-title","account-intro","account-auth-view","account-profile-view","account-tab-login","account-tab-register","account-login-form","account-register-form","account-login-username","account-login-password","account-login-submit","account-register-display","account-register-username","account-register-password","account-register-password2","account-register-submit","account-current-username","account-profile-username","account-profile-display","account-profile-public","account-profile-save","account-current-password","account-new-password","account-password-save","account-logout","account-message",
 "new-chat","refresh-chats","form","input","send",
 "image-button","image-file","image-preview","image-preview-img",
-"image-preview-name","image-remove",
+"image-preview-name","image-remove","image-quota-status",
 "voice-mic","voice-toggle","voice-status","admin-screen",
 "admin-login","admin-dashboard","admin-password",
 "admin-login-button","admin-error","admin-refresh",
@@ -473,14 +475,35 @@ catch{throw new Error("Server vrátil neplatnou odpověď: "+raw.slice(0,180))}
 
 async function api(action,extra={},useToken=true){
 const headers={"Content-Type":"application/json"};
-if(useToken&&state.token)headers.Authorization="Bearer "+state.token;
+// OWNER / ADMIN relace mají přednost před běžným účtem nebo hostem.
+const sessionToken=state.ownerToken||state.adminToken||state.token;
+if(useToken&&sessionToken)headers.Authorization="Bearer "+sessionToken;
 const response=await fetch(WORKER_URL,{
 method:"POST",headers,
-body:JSON.stringify({action,...(useToken&&state.token?{token:state.token}:{}),...extra})
+body:JSON.stringify({action,...(useToken&&sessionToken?{token:sessionToken}:{}),...extra})
 });
 const data=await readResponse(response);
 if(!response.ok||data.error)throw new Error(data.error||"Chyba serveru "+response.status);
 return data;
+}
+
+async function updateImageQuota(){
+try{
+const data=await api("image-quota");
+const quota=data.quota||{};
+state.imageQuotaUnlimited=Boolean(quota.unlimited);
+state.imageQuotaRemaining=quota.unlimited?null:Number(quota.remaining||0);
+if(quota.unlimited){
+$("image-quota-status").textContent="Obrázky: neomezeně (ADMIN / OWNER)";
+}else{
+$("image-quota-status").textContent="Dnes můžeš analyzovat ještě "+state.imageQuotaRemaining+" ze 2 obrázků.";
+}
+$("image-quota-status").style.color=(!quota.unlimited&&state.imageQuotaRemaining===0)?"#ffb36b":"#91a397";
+$("image-button").disabled=state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
+}catch(error){
+console.warn("Nepodařilo se načíst limit obrázků:",error);
+$("image-quota-status").textContent="Denní limit obrázků se nepodařilo načíst.";
+}
 }
 
 async function loadPublicInfo(){
@@ -543,6 +566,7 @@ localStorage.setItem("antzaden_guest_token",state.token);
 
 updateAccountButton();
 if(location.hash!=="#admin")$("app").style.display="block";
+await updateImageQuota();
 await loadChats();
 await checkConnection();
 }catch(error){
@@ -893,7 +917,7 @@ resolve(image);
 image.onerror=()=>{
 URL.revokeObjectURL(url);
 reject(new Error("Obrázek se nepodařilo načíst."));
-};
+  };
 image.src=url;
 });
 }
@@ -957,6 +981,11 @@ $("image-file").click();
 $("image-file").addEventListener("change",async()=>{
 const file=$("image-file").files?.[0];
 if(!file)return;
+if(!state.imageQuotaUnlimited&&state.imageQuotaRemaining===0){
+alert("Dnešní limit 2 obrázků už máš vyčerpaný. Zkus to znovu zítra.");
+$("image-file").value="";
+return;
+}
 
 $("image-button").disabled=true;
 $("image-button").textContent="Zpracovávám…";
@@ -1294,6 +1323,7 @@ state.busy=false;
 $("send").disabled=false;
 $("input").disabled=false;
 $("image-button").disabled=false;
+await updateImageQuota();
 $("input").focus();
 scrollDown();
 }
@@ -1359,6 +1389,7 @@ state.busy=false;
 $("send").disabled=false;
 $("input").disabled=false;
 $("image-button").disabled=false;
+await updateImageQuota();
 $("input").focus();
 scrollDown();
 }
