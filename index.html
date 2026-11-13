@@ -71,7 +71,9 @@ main{width:100%;max-width:950px;margin:0 auto;flex:1;min-height:0;display:flex;f
 #input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
 #input::placeholder{color:#718077}
 #send{width:44px;height:44px;border:0;border-radius:13px;background:linear-gradient(135deg,#65ef88,#24b653);color:#061109;font-size:21px;flex-shrink:0}
-#image-button{height:42px;padding:0 12px;border:1px solid #426b4a;border-radius:12px;background:#18291c;color:#aaf5b9;font-size:12px;white-space:nowrap;flex-shrink:0}
+#image-button,#image-generate-button{height:42px;padding:0 12px;border:1px solid #426b4a;border-radius:12px;background:#18291c;color:#aaf5b9;font-size:12px;white-space:nowrap;flex-shrink:0}
+#image-generate-button{border-color:#557b9a;background:#172431;color:#b8ddff}
+#image-generate-button.active{border-color:#55e879;background:#1c4729;color:#fff}
 #image-file{display:none}
 #image-preview{display:none;align-items:center;gap:12px;margin:0 0 10px;padding:10px;background:#142019;border:1px solid #35543c;border-radius:12px}
 #image-preview img{width:66px;height:66px;object-fit:cover;border-radius:9px}
@@ -138,7 +140,7 @@ main{padding:10px 10px 0}
 .sidebar-title{font-size:9px}
 .header-right{gap:5px}
 .small-button{padding:8px;font-size:10px}
-#image-button{padding:0 8px;font-size:11px}
+#image-button,#image-generate-button{padding:0 8px;font-size:10px}
 #input{font-size:13px;padding:8px}
 .owner-user-controls>*{max-width:100%}
 }
@@ -199,6 +201,7 @@ main{padding:10px 10px 0}
 
         <form id="form">
           <button type="button" id="image-button" title="Nahrát obrázek">＋ Obrázek</button>
+          <button type="button" id="image-generate-button" title="Zapnout tvorbu obrázku">🎨 Vytvořit</button>
           <input id="image-file" type="file" accept="image/jpeg,image/png,image/webp">
           <input id="input" type="text" placeholder="Napiš zprávu nebo otázku k obrázku..." autocomplete="off" maxlength="4000">
           <button id="send" type="submit">➤</button>
@@ -418,7 +421,7 @@ currentChatId:null,busy:false,
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
 ownerToken:sessionStorage.getItem("antzaden_owner_token")||"",
 selectedImage:null,selectedImageName:"",
-imageQuotaRemaining:2,imageQuotaUnlimited:false,
+imageQuotaRemaining:2,imageQuotaUnlimited:false,imageGenerateMode:false,
 liveSocket:null,liveStream:null,
 liveAudioContext:null,liveProcessor:null,liveSource:null,
 liveMute:null,liveActive:false,liveReady:false,
@@ -430,7 +433,7 @@ const requiredIds=[
 "app","connection-status","chat-list","chat","typing",
 "account-open","account-overlay","account-close","account-title","account-intro","account-auth-view","account-profile-view","account-tab-login","account-tab-register","account-login-form","account-register-form","account-login-username","account-login-password","account-login-submit","account-register-display","account-register-username","account-register-password","account-register-password2","account-register-submit","account-current-username","account-profile-username","account-profile-display","account-profile-public","account-profile-save","account-current-password","account-new-password","account-password-save","account-logout","account-message",
 "new-chat","refresh-chats","form","input","send",
-"image-button","image-file","image-preview","image-preview-img",
+"image-button","image-generate-button","image-file","image-preview","image-preview-img",
 "image-preview-name","image-remove","image-quota-status",
 "voice-mic","voice-toggle","voice-status","admin-screen",
 "admin-login","admin-dashboard","admin-password",
@@ -496,13 +499,15 @@ state.imageQuotaRemaining=quota.unlimited?null:Number(quota.remaining||0);
 if(quota.unlimited){
 $("image-quota-status").textContent="Obrázky: neomezeně (ADMIN / OWNER)";
 }else{
-$("image-quota-status").textContent="Dnes můžeš analyzovat ještě "+state.imageQuotaRemaining+" ze 2 obrázků.";
+$("image-quota-status").textContent="Dnes můžeš ještě analyzovat nebo vytvořit "+state.imageQuotaRemaining+" ze 2 obrázků.";
 }
 $("image-quota-status").style.color=(!quota.unlimited&&state.imageQuotaRemaining===0)?"#ffb36b":"#91a397";
 $("image-button").disabled=state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
+$("image-generate-button").disabled=state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
 }catch(error){
 console.warn("Nepodařilo se načíst limit obrázků:",error);
 $("image-quota-status").textContent="Denní limit obrázků se nepodařilo načíst.";
+$("image-generate-button").disabled=true;
 }
 }
 
@@ -812,7 +817,7 @@ function addImageToMessage(box,data){
 const image=document.createElement("img");
 image.className="chat-image";
 image.src=data.dataUrl;
-image.alt="Obrázek odeslaný do AntZadEn AI";
+image.alt=data.generated?"Obrázek vytvořený AntZadEn AI":"Obrázek odeslaný do AntZadEn AI";
 image.loading="lazy";
 box.appendChild(image);
 
@@ -849,7 +854,7 @@ name.textContent="ANTZADEN AI";
 box.appendChild(name);
 }
 
-const imageData=isUser?parseImageMessage(text):null;
+const imageData=parseImageMessage(text);
 
 if(imageData){
 addImageToMessage(box,imageData);
@@ -972,6 +977,17 @@ throw new Error("Obrázek je stále příliš velký. Vyber menší soubor.");
 
 return dataUrl;
 }
+
+$("image-generate-button").addEventListener("click",()=>{
+if(state.busy)return;
+state.imageGenerateMode=!state.imageGenerateMode;
+$("image-generate-button").classList.toggle("active",state.imageGenerateMode);
+$("image-generate-button").textContent=state.imageGenerateMode?"🎨 Tvorba zapnutá":"🎨 Vytvořit";
+$("input").placeholder=state.imageGenerateMode
+?"Popiš obrázek, který chceš vytvořit…"
+:"Napiš zprávu nebo otázku k obrázku...";
+$("input").focus();
+});
 
 $("image-button").addEventListener("click",()=>{
 if(state.busy)return;
@@ -1389,6 +1405,54 @@ state.busy=false;
 $("send").disabled=false;
 $("input").disabled=false;
 $("image-button").disabled=false;
+await updateImageQuota();
+$("input").focus();
+scrollDown();
+}
+}
+
+// GENEROVÁNÍ OBRÁZKŮ – BEZPLATNÝ REŽIM
+async function sendGeneratedImage(){
+const prompt=$("input").value.trim();
+if(state.busy||!prompt)return;
+if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
+
+state.busy=true;
+$("send").disabled=true;
+$("input").disabled=true;
+$("image-button").disabled=true;
+$("image-generate-button").disabled=true;
+
+addMessage("🎨 Vytvoř obrázek: "+prompt,true);
+$("input").value="";
+setTypingText("AntZadEn AI vytváří obrázek…");
+$("typing").style.display="flex";
+scrollDown();
+
+try{
+const data=await api("image-generate",{
+chatId:state.currentChatId,
+prompt
+});
+if(!data.image)throw new Error("Server nevrátil vytvořený obrázek.");
+
+$("typing").style.display="none";
+const imageContent=IMAGE_PREFIX+JSON.stringify({
+dataUrl:data.image,
+question:prompt,
+generated:true,
+version:1
+});
+addMessage(imageContent,false);
+await loadChatsListOnly();
+}catch(error){
+$("typing").style.display="none";
+addMessage("Obrázek se nepodařilo vytvořit.\\n\\n"+error.message,false);
+console.error("Generování obrázku:",error);
+}finally{
+state.busy=false;
+$("send").disabled=false;
+$("input").disabled=false;
 await updateImageQuota();
 $("input").focus();
 scrollDown();
@@ -2536,8 +2600,12 @@ return;
 const value=$("input").value.trim();
 
 if(value){
+if(state.imageGenerateMode){
+sendGeneratedImage();
+}else{
 $("input").value="";
 sendMessage(value);
+}
 }
 });
 
@@ -2686,7 +2754,7 @@ window.addEventListener("hashchange",handleRoute);
 async function startApp(){
 if(!validatePage())return;
 
-console.log("AntZadEn AI Assistant – verze 5.1 Vision + AntZadEn ID + OWNER.");
+console.log("AntZadEn AI Assistant – verze 5.2 Vision + Image Generation + AntZadEn ID + OWNER.");
 
 handleRoute();
 await initializeGuest();
