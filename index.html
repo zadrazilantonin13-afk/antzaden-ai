@@ -277,6 +277,7 @@ main{padding:10px 10px 0}
     <div style="font-size:42px">🛠️</div>
     <h1 style="color:#75f596">AntZadEn AI je v údržbě</h1>
     <p id="maintenance-message" style="color:#b9c9bd;line-height:1.6">Právě probíhá údržba. Zkus to prosím později.</p>
+    <p id="maintenance-countdown" style="margin-top:18px;color:#75f596;font-weight:700" aria-live="polite"></p>
   </div>
 </div>
 
@@ -357,6 +358,9 @@ main{padding:10px 10px 0}
         <span>Zapnout režim údržby</span>
       </label>
       <textarea id="admin-maintenance-message" class="admin-input" rows="3" placeholder="Zpráva pro návštěvníky"></textarea>
+      <label style="display:block;margin:12px 0 6px;color:#b9c9bd;font-size:13px">Automaticky ukončit údržbu v (nepovinné)</label>
+      <input id="admin-maintenance-until" class="admin-input" type="datetime-local">
+      <p class="admin-muted">Po dosažení času se údržba automaticky vypne. Nech prázdné pro ruční vypnutí.</p>
       <button class="admin-button" id="admin-maintenance-save">Uložit nastavení údržby</button>
       <p id="admin-maintenance-status" class="admin-muted"></p>
     </div>
@@ -369,6 +373,9 @@ main{padding:10px 10px 0}
         <strong>Povolit odesílání zpráv (CHAT ON)</strong>
       </label>
       <textarea id="admin-chat-message" class="admin-input" rows="3" maxlength="500" placeholder="Zpráva, kterou uvidí návštěvníci při vypnutém chatu"></textarea>
+      <label style="display:block;margin:12px 0 6px;color:#b9c9bd;font-size:13px">Automaticky zapnout CHAT ON v (nepovinné)</label>
+      <input id="admin-chat-until" class="admin-input" type="datetime-local">
+      <p class="admin-muted">Po dosažení času se chat automaticky znovu zapne. Nech prázdné pro ruční zapnutí.</p>
       <button class="admin-button" id="admin-chat-save">Uložit CHAT ON/OFF</button>
       <p id="admin-chat-status" class="admin-muted"></p>
     </div>
@@ -432,6 +439,7 @@ const state={
 token:localStorage.getItem("antzaden_account_token")||localStorage.getItem("antzaden_guest_token")||"",
 accountUser:null,isAccount:false,
 currentChatId:null,busy:false,chatEnabled:true,chatDisabledMessage:"AntZadEn AI má momentálně pozastavené odesílání zpráv. Zkus to prosím později.",
+chatDisabledUntil:"",maintenanceUntil:"",maintenanceActive:false,autoMaintenanceLastRun:null,
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
 ownerToken:sessionStorage.getItem("antzaden_owner_token")||"",
 selectedImage:null,selectedImageName:"",
@@ -456,8 +464,8 @@ const requiredIds=[
 "admin-search-status","admin-db-status","admin-image-status",
 "admin-stat-messages","admin-stat-guests","admin-stat-chats","admin-stat-today",
 "admin-stats-refresh","admin-maintenance-enabled",
-"admin-maintenance-message","admin-maintenance-save",
-"admin-chat-enabled","admin-chat-message","admin-chat-save","admin-chat-status","chat-disabled-banner",
+"admin-maintenance-message","admin-maintenance-until","admin-maintenance-save",
+"admin-chat-enabled","admin-chat-message","admin-chat-until","admin-chat-save","admin-chat-status","chat-disabled-banner","maintenance-countdown",
 "admin-maintenance-status","admin-announcement-text",
 "admin-announcement-add","admin-announcements-list",
 "public-notices","maintenance-screen","maintenance-message",
@@ -526,24 +534,146 @@ $("image-generate-button").disabled=true;
 }
 }
 
+function formatCountdown(until){
+const timestamp=Date.parse(until||"");
+if(!Number.isFinite(timestamp))return "";
+const remaining=timestamp-Date.now();
+if(remaining<=0)return "obnovuji stav…";
+const totalSeconds=Math.floor(remaining/1000);
+const days=Math.floor(totalSeconds/86400);
+const hours=Math.floor((totalSeconds%86400)/3600);
+const minutes=Math.floor((totalSeconds%3600)/60);
+const seconds=totalSeconds%60;
+const parts=[];
+if(days)parts.push(days+" d");
+if(hours||days)parts.push(hours+" h");
+parts.push(minutes+" min");
+parts.push(seconds+" s");
+return parts.join(" ");
+}
+
+function isoToLocalInput(value){
+if(!value)return "";
+const date=new Date(value);
+if(Number.isNaN(date.getTime()))return "";
+const pad=n=>String(n).padStart(2,"0");
+return date.getFullYear()+"-"+pad(date.getMonth()+1)+"-"+pad(date.getDate())+
+"T"+pad(date.getHours())+":"+pad(date.getMinutes());
+}
+
+function localInputToIso(value){
+if(!value)return "";
+const date=new Date(value);
+if(Number.isNaN(date.getTime()))throw new Error("Zadej platné datum a čas.");
+if(date.getTime()<=Date.now())throw new Error("Termín automatického zapnutí musí být v budoucnosti.");
+return date.toISOString();
+}
+
+function pragueDateTimeToDate(year,month,day,hour,minute){
+const wanted=Date.UTC(year,month-1,day,hour,minute,0);
+let guess=wanted;
+for(let i=0;i<3;i++){
+const parts=new Intl.DateTimeFormat("en-GB",{
+timeZone:"Europe/Prague",year:"numeric",month:"2-digit",day:"2-digit",
+hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+}).formatToParts(new Date(guess));
+const values=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+const represented=Date.UTC(
+Number(values.year),Number(values.month)-1,Number(values.day),
+Number(values.hour),Number(values.minute),Number(values.second)
+);
+guess+=wanted-represented;
+}
+return new Date(guess);
+}
+
+function nextPragueMaintenanceAt(){
+const now=new Date();
+const parts=new Intl.DateTimeFormat("en-GB",{
+timeZone:"Europe/Prague",year:"numeric",month:"2-digit",day:"2-digit",
+hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+}).formatToParts(now);
+const values=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+let year=Number(values.year),month=Number(values.month),day=Number(values.day);
+const dateKey=year+"-"+String(month).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+const currentMinutes=Number(values.hour)*60+Number(values.minute);
+let targetMinutes=360;
+
+if(state.autoMaintenanceLastRun===dateKey||currentMinutes>450){
+const next=new Date(Date.UTC(year,month-1,day+1));
+year=next.getUTCFullYear();month=next.getUTCMonth()+1;day=next.getUTCDate();
+targetMinutes=360;
+}else if(currentMinutes<360){
+targetMinutes=360;
+}else{
+targetMinutes=Math.ceil(currentMinutes/15)*15;
+if(targetMinutes>450){
+const next=new Date(Date.UTC(year,month-1,day+1));
+year=next.getUTCFullYear();month=next.getUTCMonth()+1;day=next.getUTCDate();
+targetMinutes=360;
+}
+}
+return pragueDateTimeToDate(
+year,month,day,Math.floor(targetMinutes/60),targetMinutes%60
+);
+}
+
+function updateCountdownDisplays(){
+const maintenanceCountdown=$("maintenance-countdown");
+if(maintenanceCountdown){
+if(state.maintenanceActive){
+maintenanceCountdown.textContent=state.maintenanceUntil
+?"Automatické ukončení údržby za: "+formatCountdown(state.maintenanceUntil)
+:"Údržba je zapnutá bez časového omezení.";
+}else maintenanceCountdown.textContent="";
+}
+const chatCountdown=$("chat-disabled-countdown");
+if(chatCountdown){
+chatCountdown.textContent=state.chatDisabledUntil
+?"Automatické zapnutí chatu za: "+formatCountdown(state.chatDisabledUntil)
+:"Chat je vypnutý do ručního zapnutí.";
+}
+const autoCountdown=$("admin-auto-maintenance-countdown");
+if(autoCountdown){
+const enabled=$("admin-auto-maintenance-enabled")?.checked;
+autoCountdown.textContent=enabled
+?"Další automatická kontrola přibližně za: "+formatCountdown(nextPragueMaintenanceAt().toISOString())+" (každý den v 06:00, Praha)."
+:"Automatická kontrola je vypnutá.";
+}
+}
+
 function applyChatAvailability(){
 const disabled=!state.chatEnabled;
-const message=state.chatDisabledMessage||"AntZadEn AI má momentálně pozastavené odesílání zpráv.";
 const banner=$("chat-disabled-banner");
 if(banner){
 banner.style.display=disabled?"block":"none";
-banner.textContent=disabled?"🔒 Odesílání zpráv je momentálně vypnuté. "+message:"";
+banner.replaceChildren();
+if(disabled){
+const title=document.createElement("strong");
+title.textContent="🔒 CHAT OFF – odesílání je dočasně pozastaveno";
+title.style.display="block";
+title.style.marginBottom="5px";
+const message=document.createElement("div");
+message.textContent=state.chatDisabledMessage||"AntZadEn AI má momentálně pozastavené odesílání zpráv.";
+const countdown=document.createElement("div");
+countdown.id="chat-disabled-countdown";
+countdown.style.cssText="margin-top:7px;color:#ffe6b8;font-weight:700;font-size:13px";
+banner.append(title,message,countdown);
+}
 }
 $("input").disabled=disabled||state.busy;
 $("send").disabled=disabled||state.busy;
+$("new-chat").disabled=disabled;
 $("image-button").disabled=disabled||state.busy||(!state.imageQuotaUnlimited&&state.imageQuotaRemaining===0);
 $("image-generate-button").disabled=disabled||state.busy||(!state.imageQuotaUnlimited&&state.imageQuotaRemaining===0);
+$("image-file").disabled=disabled;
 $("voice-mic").disabled=disabled||state.busy;
-$("input").placeholder=disabled?"Odesílání zpráv je momentálně vypnuté.":"Napiš zprávu nebo otázku k obrázku...";
+$("input").placeholder=disabled?"Chat je pozastaven. Zprávy zatím nelze odesílat.":"Napiš zprávu nebo otázku k obrázku...";
 document.querySelectorAll(".quick button").forEach(button=>{button.disabled=disabled;});
 if(disabled&&state.liveActive&&typeof stopLiveVoice==="function"){
 stopLiveVoice().catch(error=>console.warn("Nepodařilo se ukončit LIVE při vypnutí chatu:",error));
 }
+updateCountdownDisplays();
 }
 
 async function loadPublicInfo(){
@@ -552,6 +682,9 @@ const maintenanceScreen=$("maintenance-screen");
 
 state.chatEnabled=data.chatEnabled!==false;
 state.chatDisabledMessage=data.chatDisabledMessage||"AntZadEn AI má momentálně pozastavené odesílání zpráv. Zkus to prosím později.";
+state.chatDisabledUntil=data.chatDisabledUntil||"";
+state.maintenanceActive=Boolean(data.maintenance);
+state.maintenanceUntil=data.maintenanceUntil||"";
 applyChatAvailability();
 
 if(data.maintenance){
@@ -560,7 +693,10 @@ if(location.hash!=="#admin"){
 maintenanceScreen.style.display="flex";
 $("maintenance-message").textContent=data.maintenanceMessage||"AntZadEn AI je dočasně v údržbě.";
 }
-}else maintenanceScreen.style.display="none";
+}else{
+maintenanceScreen.style.display="none";
+$("app").style.display="";
+}
 
 const notices=$("public-notices");
 const items=Array.isArray(data.announcements)?data.announcements:[];
@@ -576,6 +712,7 @@ notices.appendChild(line);
 });
 }else notices.style.display="none";
 
+updateCountdownDisplays();
 return data;
 }
 
@@ -2432,16 +2569,28 @@ card.id="admin-auto-maintenance-card";
 card.innerHTML=`
 <h2>🔧 Automatická údržba systému</h2>
 <p class="admin-muted">
-Automatické kontroly systému každý den mezi 06:00 a 07:30.
+Automatické diagnostické kontroly každý den v 06:00–07:30 (čas Praha).
 Vypnutí zastaví také právě probíhající automatickou údržbu.
 </p>
+<div style="padding:12px;border:1px solid #35543c;border-radius:12px;background:#101b14;margin:12px 0">
+<strong style="color:#75f596">⏳ Odpočet do další kontroly</strong>
+<p id="admin-auto-maintenance-countdown" style="margin:7px 0 0;color:#dce9df">Počítám…</p>
+</div>
 <label style="display:flex;gap:10px;align-items:center;margin:15px 0">
 <input type="checkbox" id="admin-auto-maintenance-enabled">
 <strong>Zapnout automatickou údržbu</strong>
 </label>
+<p class="admin-muted" style="padding:10px;border-left:3px solid #d49a43;background:#211b11">
+DŮLEŽITÉ: Automatické spouštění vyžaduje Cron Trigger v Cloudflare Workeru:
+<code>*/15 * * * *</code>. Nastav ho v Settings → Triggers → Cron Triggers.
+Bez tohoto triggeru se automatická kontrola sama nespustí.
+</p>
 <p id="admin-auto-maintenance-status" class="admin-muted">Načítám stav údržby…</p>
 <div id="admin-auto-maintenance-report" style="white-space:pre-wrap;line-height:1.6;margin:12px 0;color:#dce9df">Zatím není dostupný žádný report.</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="admin-button" id="admin-auto-maintenance-run">▶ Spustit kontrolu nyní</button>
 <button class="admin-button" id="admin-auto-maintenance-refresh">↻ Obnovit stav a výsledky</button>
+</div>
 `;
 
 const history=document.createElement("div");
@@ -2489,6 +2638,23 @@ checkbox.disabled=false;
 }
 });
 
+$("admin-auto-maintenance-run").addEventListener("click",async()=>{
+const button=$("admin-auto-maintenance-run");
+const status=$("admin-auto-maintenance-status");
+button.disabled=true;
+status.textContent="Spouštím ruční kontrolu… může to chvíli trvat.";
+try{
+const result=await adminRequest("admin-auto-maintenance-run");
+status.textContent="Stav: "+(result.status||"Kontrola dokončena");
+await refreshAutoMaintenance();
+await refreshActivity();
+}catch(error){
+status.textContent="Ruční kontrola selhala: "+error.message;
+}finally{
+button.disabled=false;
+}
+});
+
 $("admin-auto-maintenance-refresh").addEventListener("click",async()=>{
 try{
 await refreshAutoMaintenance();
@@ -2513,6 +2679,7 @@ createAdminMaintenancePanel();
 const data=await adminRequest("admin-auto-maintenance-get");
 
 $("admin-auto-maintenance-enabled").checked=!!data.enabled;
+state.autoMaintenanceLastRun=data.lastRun||null;
 
 const status=$("admin-auto-maintenance-status");
 const report=$("admin-auto-maintenance-report");
@@ -2521,6 +2688,7 @@ status.textContent=
 "Stav: "+(data.status||"Neznámý")+
 (data.lastRun?"\nPoslední spuštění: "+new Date(data.lastRun).toLocaleString("cs-CZ"):"");
 
+updateCountdownDisplays();
 report.textContent="";
 
 if(data.report){
@@ -2581,10 +2749,12 @@ const maintenance=await adminRequest("admin-maintenance-get");
 
 $("admin-maintenance-enabled").checked=maintenance.enabled;
 $("admin-maintenance-message").value=maintenance.message||"";
+$("admin-maintenance-until").value=isoToLocalInput(maintenance.until||"");
 
 const chatSettings=await adminRequest("admin-chat-get");
 $("admin-chat-enabled").checked=chatSettings.enabled;
 $("admin-chat-message").value=chatSettings.message||"";
+$("admin-chat-until").value=isoToLocalInput(chatSettings.until||"");
 
 await refreshAnnouncements();
 await refreshAutoMaintenance();
@@ -2736,12 +2906,20 @@ const button=$("admin-chat-save");
 status.textContent="Ukládám nastavení…";
 button.disabled=true;
 try{
+const enabled=$("admin-chat-enabled").checked;
+const until=enabled?"":localInputToIso($("admin-chat-until").value);
 const result=await adminRequest("admin-chat-set",{
-enabled:$("admin-chat-enabled").checked,
-message:$("admin-chat-message").value
+enabled,
+message:$("admin-chat-message").value,
+until
 });
-status.textContent=result.enabled?"CHAT ON – odesílání zpráv je povoleno.":"CHAT OFF – odesílání zpráv je vypnuto. Servery zůstávají online.";
+status.textContent=result.enabled
+?"CHAT ON – odesílání zpráv je povoleno."
+:result.until
+?"CHAT OFF – chat se automaticky zapne "+new Date(result.until).toLocaleString("cs-CZ")+"."
+:"CHAT OFF – chat zůstane vypnutý až do ručního zapnutí. Servery zůstávají online.";
 await loadPublicInfo();
+await refreshAdminFeatures();
 }catch(error){
 status.textContent="Nepodařilo se uložit nastavení: "+error.message;
 }
@@ -2753,12 +2931,21 @@ const status=$("admin-maintenance-status");
 status.textContent="Ukládám…";
 
 try{
-await adminRequest("admin-maintenance-set",{
-enabled:$("admin-maintenance-enabled").checked,
-message:$("admin-maintenance-message").value
+const enabled=$("admin-maintenance-enabled").checked;
+const until=enabled?localInputToIso($("admin-maintenance-until").value):"";
+const result=await adminRequest("admin-maintenance-set",{
+enabled,
+message:$("admin-maintenance-message").value,
+until
 });
 
-status.textContent="Nastavení bylo uloženo.";
+status.textContent=result.enabled
+?result.until
+?"Údržba je zapnutá a automaticky skončí "+new Date(result.until).toLocaleString("cs-CZ")+"."
+:"Údržba je zapnutá bez časového omezení."
+:"Údržba je vypnutá.";
+$("admin-maintenance-until").value=isoToLocalInput(result.until||"");
+await loadPublicInfo();
 }catch(error){
 status.textContent=error.message;
 }
@@ -2820,6 +3007,7 @@ await initializeGuest();
 
 setInterval(checkConnection,30000);
 setInterval(()=>loadPublicInfo().catch(error=>console.warn("Kontrola dostupnosti chatu selhala:",error)),15000);
+setInterval(updateCountdownDisplays,1000);
 }
 
 startApp();
