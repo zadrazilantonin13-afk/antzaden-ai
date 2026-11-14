@@ -175,6 +175,8 @@ main{padding:10px 10px 0}
   </aside>
 
   <div id="main-area">
+    <div id="chat-disabled-banner" style="display:none;margin:12px 16px 0;padding:13px 15px;border:1px solid #8a6637;border-radius:12px;background:#2b2114;color:#ffd99a;line-height:1.5" role="status" aria-live="polite"></div>
+
     <div class="quick">
       <button type="button" data-question="Co je to AntZadEn?">💡 Co je AntZadEn?</button>
       <button type="button" data-question="Napiš básničku o AntZadEn.">✍️ Básnička</button>
@@ -360,6 +362,18 @@ main{padding:10px 10px 0}
     </div>
 
     <div class="admin-card">
+      <h2>💬 Odesílání zpráv – CHAT ON/OFF</h2>
+      <p class="admin-muted">Tato funkce vypne pouze odesílání zpráv, analýzu obrázků a generování obrázků. Server, databáze, účty, historie chatů i administrace zůstanou online.</p>
+      <label style="display:flex;gap:10px;align-items:center;margin:15px 0">
+        <input type="checkbox" id="admin-chat-enabled" checked>
+        <strong>Povolit odesílání zpráv (CHAT ON)</strong>
+      </label>
+      <textarea id="admin-chat-message" class="admin-input" rows="3" maxlength="500" placeholder="Zpráva, kterou uvidí návštěvníci při vypnutém chatu"></textarea>
+      <button class="admin-button" id="admin-chat-save">Uložit CHAT ON/OFF</button>
+      <p id="admin-chat-status" class="admin-muted"></p>
+    </div>
+
+    <div class="admin-card">
       <h2>📢 Oznámení pro návštěvníky</h2>
       <textarea id="admin-announcement-text" class="admin-input" rows="3" maxlength="500" placeholder="Text oznámení pro všechny návštěvníky"></textarea>
       <button class="admin-button" id="admin-announcement-add">Zveřejnit oznámení</button>
@@ -417,7 +431,7 @@ const $=id=>document.getElementById(id);
 const state={
 token:localStorage.getItem("antzaden_account_token")||localStorage.getItem("antzaden_guest_token")||"",
 accountUser:null,isAccount:false,
-currentChatId:null,busy:false,
+currentChatId:null,busy:false,chatEnabled:true,chatDisabledMessage:"AntZadEn AI má momentálně pozastavené odesílání zpráv. Zkus to prosím později.",
 adminToken:sessionStorage.getItem("antzaden_admin_token")||"",
 ownerToken:sessionStorage.getItem("antzaden_owner_token")||"",
 selectedImage:null,selectedImageName:"",
@@ -443,6 +457,7 @@ const requiredIds=[
 "admin-stat-messages","admin-stat-guests","admin-stat-chats","admin-stat-today",
 "admin-stats-refresh","admin-maintenance-enabled",
 "admin-maintenance-message","admin-maintenance-save",
+"admin-chat-enabled","admin-chat-message","admin-chat-save","admin-chat-status","chat-disabled-banner",
 "admin-maintenance-status","admin-announcement-text",
 "admin-announcement-add","admin-announcements-list",
 "public-notices","maintenance-screen","maintenance-message",
@@ -502,8 +517,8 @@ $("image-quota-status").textContent="Obrázky: neomezeně (ADMIN / OWNER)";
 $("image-quota-status").textContent="Dnes můžeš ještě analyzovat nebo vytvořit "+state.imageQuotaRemaining+" ze 2 obrázků.";
 }
 $("image-quota-status").style.color=(!quota.unlimited&&state.imageQuotaRemaining===0)?"#ffb36b":"#91a397";
-$("image-button").disabled=state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
-$("image-generate-button").disabled=state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
+$("image-button").disabled=!state.chatEnabled||state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
+$("image-generate-button").disabled=!state.chatEnabled||state.busy||(!quota.unlimited&&state.imageQuotaRemaining===0);
 }catch(error){
 console.warn("Nepodařilo se načíst limit obrázků:",error);
 $("image-quota-status").textContent="Denní limit obrázků se nepodařilo načíst.";
@@ -511,9 +526,33 @@ $("image-generate-button").disabled=true;
 }
 }
 
+function applyChatAvailability(){
+const disabled=!state.chatEnabled;
+const message=state.chatDisabledMessage||"AntZadEn AI má momentálně pozastavené odesílání zpráv.";
+const banner=$("chat-disabled-banner");
+if(banner){
+banner.style.display=disabled?"block":"none";
+banner.textContent=disabled?"🔒 Odesílání zpráv je momentálně vypnuté. "+message:"";
+}
+$("input").disabled=disabled||state.busy;
+$("send").disabled=disabled||state.busy;
+$("image-button").disabled=disabled||state.busy||(!state.imageQuotaUnlimited&&state.imageQuotaRemaining===0);
+$("image-generate-button").disabled=disabled||state.busy||(!state.imageQuotaUnlimited&&state.imageQuotaRemaining===0);
+$("voice-mic").disabled=disabled||state.busy;
+$("input").placeholder=disabled?"Odesílání zpráv je momentálně vypnuté.":"Napiš zprávu nebo otázku k obrázku...";
+document.querySelectorAll(".quick button").forEach(button=>{button.disabled=disabled;});
+if(disabled&&state.liveActive&&typeof stopLiveVoice==="function"){
+stopLiveVoice().catch(error=>console.warn("Nepodařilo se ukončit LIVE při vypnutí chatu:",error));
+}
+}
+
 async function loadPublicInfo(){
 const data=await api("public-info",{},false);
 const maintenanceScreen=$("maintenance-screen");
+
+state.chatEnabled=data.chatEnabled!==false;
+state.chatDisabledMessage=data.chatDisabledMessage||"AntZadEn AI má momentálně pozastavené odesílání zpráv. Zkus to prosím později.";
+applyChatAvailability();
 
 if(data.maintenance){
 $("app").style.display="none";
@@ -1277,6 +1316,7 @@ window.speechSynthesis.speak(utterance);
 
 // ODESÍLÁNÍ TEXTU
 async function sendMessage(query){
+if(!state.chatEnabled){applyChatAvailability();return;}
 if(state.busy||!query.trim())return;
 if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
 
@@ -1336,9 +1376,7 @@ addMessage("Nepodařilo se získat odpověď.\n\n"+error.message,false);
 console.error("Odeslání zprávy:",error);
 }finally{
 state.busy=false;
-$("send").disabled=false;
-$("input").disabled=false;
-$("image-button").disabled=false;
+applyChatAvailability();
 await updateImageQuota();
 $("input").focus();
 scrollDown();
@@ -1347,6 +1385,7 @@ scrollDown();
 
 // ODESÍLÁNÍ OBRÁZKU
 async function sendImage(){
+if(!state.chatEnabled){applyChatAvailability();return;}
 if(state.busy||!state.selectedImage)return;
 if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
 
@@ -1402,9 +1441,7 @@ false
 console.error("Analýza obrázku:",error);
 }finally{
 state.busy=false;
-$("send").disabled=false;
-$("input").disabled=false;
-$("image-button").disabled=false;
+applyChatAvailability();
 await updateImageQuota();
 $("input").focus();
 scrollDown();
@@ -1413,6 +1450,7 @@ scrollDown();
 
 // GENEROVÁNÍ OBRÁZKŮ – BEZPLATNÝ REŽIM
 async function sendGeneratedImage(){
+if(!state.chatEnabled){applyChatAvailability();return;}
 const prompt=$("input").value.trim();
 if(state.busy||!prompt)return;
 if(!state.currentChatId){await createChat();if(!state.currentChatId)return;}
@@ -1451,8 +1489,7 @@ addMessage("Obrázek se nepodařilo vytvořit.\\n\\n"+error.message,false);
 console.error("Generování obrázku:",error);
 }finally{
 state.busy=false;
-$("send").disabled=false;
-$("input").disabled=false;
+applyChatAvailability();
 await updateImageQuota();
 $("input").focus();
 scrollDown();
@@ -2545,6 +2582,10 @@ const maintenance=await adminRequest("admin-maintenance-get");
 $("admin-maintenance-enabled").checked=maintenance.enabled;
 $("admin-maintenance-message").value=maintenance.message||"";
 
+const chatSettings=await adminRequest("admin-chat-get");
+$("admin-chat-enabled").checked=chatSettings.enabled;
+$("admin-chat-message").value=chatSettings.message||"";
+
 await refreshAnnouncements();
 await refreshAutoMaintenance();
 await refreshActivity();
@@ -2689,6 +2730,24 @@ alert(error.message);
 }
 });
 
+$("admin-chat-save").addEventListener("click",async()=>{
+const status=$("admin-chat-status");
+const button=$("admin-chat-save");
+status.textContent="Ukládám nastavení…";
+button.disabled=true;
+try{
+const result=await adminRequest("admin-chat-set",{
+enabled:$("admin-chat-enabled").checked,
+message:$("admin-chat-message").value
+});
+status.textContent=result.enabled?"CHAT ON – odesílání zpráv je povoleno.":"CHAT OFF – odesílání zpráv je vypnuto. Servery zůstávají online.";
+await loadPublicInfo();
+}catch(error){
+status.textContent="Nepodařilo se uložit nastavení: "+error.message;
+}
+finally{button.disabled=false;}
+});
+
 $("admin-maintenance-save").addEventListener("click",async()=>{
 const status=$("admin-maintenance-status");
 status.textContent="Ukládám…";
@@ -2760,6 +2819,7 @@ handleRoute();
 await initializeGuest();
 
 setInterval(checkConnection,30000);
+setInterval(()=>loadPublicInfo().catch(error=>console.warn("Kontrola dostupnosti chatu selhala:",error)),15000);
 }
 
 startApp();
