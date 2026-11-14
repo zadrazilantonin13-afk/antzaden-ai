@@ -695,7 +695,11 @@ $("maintenance-message").textContent=data.maintenanceMessage||"AntZadEn AI je do
 }
 }else{
 maintenanceScreen.style.display="none";
-$("app").style.display="";
+// Při běžném zobrazení musí být aplikace viditelná.
+// Prázdná hodnota by obnovila CSS display:none a po 15 s skryla celý web.
+if(location.hash!=="#admin"){
+$("app").style.display="block";
+}
 }
 
 const notices=$("public-notices");
